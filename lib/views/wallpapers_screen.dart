@@ -56,11 +56,17 @@ class _WallpapersScreenState extends State<WallpapersScreen> {
 
   Future<void> _performSearch() async {
     setState(() {
-      // Combine user input with "wallpapers" for more targeted search
+      // Use the exact user input for personalized search
       final userInput = _searchController.text.trim();
-      _searchQuery = userInput.isEmpty
-          ? 'wallpapers'
-          : '$userInput wallpapers';
+      
+      // For empty input, use default query
+      if (userInput.isEmpty) {
+        _searchQuery = 'wallpapers';
+      } else {
+        // For specific searches, combine user input with "wallpapers" for better context
+        // This creates a more efficient query as requested
+        _searchQuery = '$userInput wallpapers';
+      }
     });
     _loadWallpapers();
   }
@@ -81,21 +87,12 @@ class _WallpapersScreenState extends State<WallpapersScreen> {
         ),
         child: Column(
           children: [
-            // Top row with back icon and filter sort icon
             Container(
               padding: const EdgeInsets.only(top: 50, left: 16, right: 16, bottom: 8), // Reduced bottom padding
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // iOS back icon at leading position
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                    onPressed: () {
-                      // Back functionality
-                      Navigator.maybePop(context);
-                    },
-                  ),
-                  // Filter sort icon at trailing position
+                  Text('Wallpapers', style: Theme.of(context).textTheme.headlineMedium),
                   IconButton(
                     icon: const Icon(Icons.sort, color: Colors.white),
                     onPressed: () {
@@ -133,8 +130,8 @@ class _WallpapersScreenState extends State<WallpapersScreen> {
                     begin: Alignment.centerRight,
                     end: Alignment.centerLeft,
                     colors: [
-                      Colors.green.shade900.withOpacity(0.7), // Dark green on right side
                       Colors.transparent, // Transparent on left side
+                      Colors.green.shade900.withOpacity(0.7), // Dark green on right side
                     ],
                   ),
                 ),

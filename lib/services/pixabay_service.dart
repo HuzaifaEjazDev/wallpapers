@@ -9,8 +9,9 @@ class PixabayService {
   Future<List<Wallpaper>> searchWallpapers(String query) async {
     // Encode the query to handle special characters
     final encodedQuery = Uri.encodeQueryComponent(query);
+    // Optimize for exact matching with specific parameters
     final url = Uri.parse(
-        '$_baseUrl?&key=$_apiKey&q=$encodedQuery&image_type=photo&per_page=30&safesearch=true');
+        '$_baseUrl?&key=$_apiKey&q=$encodedQuery&image_type=photo&category=backgrounds&per_page=50&safesearch=true&order=relevant&min_width=1024&min_height=768&lang=en');
 
     try {
       final response = await http.get(url);
@@ -18,6 +19,9 @@ class PixabayService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List hits = data['hits'];
+        
+        // For exact matching, we want the most relevant results first
+        // Return all results without additional filtering to preserve exact matches
         return hits.map((e) => Wallpaper.fromJson(e)).toList();
       } else {
         throw Exception('Failed to load wallpapers: ${response.statusCode}');
