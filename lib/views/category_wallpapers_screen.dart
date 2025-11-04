@@ -18,9 +18,10 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
   int _currentPage = 1;
-  final int _perPage = 20;
+  final int _perPage = 20; // Pixabay API parameter
   final String _apiKey = '53072685-0770a12c564f2eb7a535baeb1';
   late ScrollController _scrollController;
+  int _totalHits = 0; // To track total available images
 
   @override
   void initState() {
@@ -38,10 +39,9 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
   }
 
   void _scrollListener() {
-    // Check if we've reached the end of the list
+    // Load more when we're at 85% of the scroll position (following best practices)
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.85) {
-      // Load more when we're at 85% of the scroll position
       if (!_isLoading && !_isLoadingMore && _hasMoreData) {
         _loadWallpapers(loadMore: true);
       }
@@ -56,13 +56,15 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
         _isLoadingMore = true;
       } else {
         _isLoading = true;
-        _currentPage = 1;
+        _currentPage = 1; // Reset to first page for new searches
         _wallpapers = [];
         _hasMoreData = true;
+        _totalHits = 0;
       }
     });
 
     try {
+      // Using Pixabay API with proper pagination parameters
       final url = Uri.parse(
           'https://pixabay.com/api/?key=$_apiKey&category=${widget.category}&image_type=photo&per_page=$_perPage&page=$_currentPage&safesearch=true&order=popular&min_width=300&min_height=200&lang=en');
 
@@ -71,20 +73,24 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         final List hits = data['hits'];
+        final int totalHits = data['totalHits'] ?? 0;
         
         setState(() {
           if (loadMore) {
             _wallpapers.addAll(hits);
             _isLoadingMore = false;
             // Check if we've reached the end of available data
-            if (hits.isEmpty) {
+            // The API limits to 500 total hits per query, so we check against that
+            if (hits.isEmpty || _wallpapers.length >= totalHits || _wallpapers.length >= 500) {
               _hasMoreData = false;
             }
           } else {
             _wallpapers = hits;
+            _totalHits = totalHits;
             _isLoading = false;
-            _hasMoreData = hits.isNotEmpty;
+            _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
           }
+          // Increment page number AFTER loading data (following best practices)
           _currentPage++;
         });
       } else {
@@ -153,7 +159,7 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
                       child: GridView.builder(
                         controller: _scrollController,
                         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
+                          crossAxisCount: 3, // 3 images per row as requested
                           crossAxisSpacing: 8,
                           mainAxisSpacing: 8,
                           childAspectRatio: 0.7,
@@ -185,6 +191,19 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
                         },
                       ),
                     ),
+                    // Pagination numbers display - showing page/total pages
+                    if (_totalHits > 0)
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Text(
+                          'Page ${_currentPage - 1} / ${((_totalHits - 1) ~/ _perPage) + 1}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
