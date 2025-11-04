@@ -14,6 +14,10 @@ class PixabayService {
     'business', 'music'
   ];
 
+  // static final List<String> categories = [
+  //   'backgrounds', 'fashion', 'nature', 'science',
+  // ];
+
   // Cache for category wallpapers
   static Map<String, List<dynamic>> _categoryCache = {};
   static List<String> _cachedCategories = [];
@@ -71,12 +75,12 @@ class PixabayService {
     _categoryCache = wallpapers;
   }
 
-  /// Fetch wallpapers by category
+  /// Fetch wallpapers by category with vertical orientation
   static Future<List<dynamic>> fetchWallpapersByCategory(
       String category, int perPage) async {
-    // Reduced min_width and min_height for faster loading thumbnails
+    // Added orientation=vertical parameter to get vertical images
     final url = Uri.parse(
-        '$_baseUrl?key=$_apiKey&category=$category&image_type=photo&per_page=$perPage&safesearch=true&order=popular&min_width=150&min_height=100&lang=en');
+        '$_baseUrl?key=$_apiKey&category=$category&image_type=all&per_page=$perPage&safesearch=true&order=popular&orientation=vertical&min_width=150&min_height=100');
 
     try {
       final response = await http.get(url);

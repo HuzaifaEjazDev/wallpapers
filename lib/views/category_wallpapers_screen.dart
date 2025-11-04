@@ -65,9 +65,9 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
     });
 
     try {
-      // Using Pixabay API with proper pagination parameters
+      // Using Pixabay API with proper pagination parameters and orientation
       final url = Uri.parse(
-          'https://pixabay.com/api/?key=$_apiKey&category=${widget.category}&image_type=photo&per_page=$_perPage&page=$_currentPage&safesearch=true&order=popular&min_width=300&min_height=200&lang=en');
+          'https://pixabay.com/api/?key=$_apiKey&category=${widget.category}&image_type=photo&per_page=$_perPage&page=$_currentPage&safesearch=true&order=popular&orientation=vertical&min_width=300&min_height=200&lang=en');
 
       final response = await http.get(url);
 
