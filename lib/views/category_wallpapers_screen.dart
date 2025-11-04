@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../widgets/cached_image.dart';
+import 'wallpaper_detail_screen.dart';
 
 class CategoryWallpapersScreen extends StatefulWidget {
   final String category;
@@ -18,10 +19,10 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
   bool _isLoadingMore = false;
   bool _hasMoreData = true;
   int _currentPage = 1;
-  final int _perPage = 20; // Pixabay API parameter
+  final int _perPage = 20; // 20 images per page as requested
   final String _apiKey = '53072685-0770a12c564f2eb7a535baeb1';
   late ScrollController _scrollController;
-  int _totalHits = 0; // To track total available images
+  int _totalHits = 0;
 
   @override
   void initState() {
@@ -39,7 +40,7 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
   }
 
   void _scrollListener() {
-    // Load more when we're at 85% of the scroll position (following best practices)
+    // Load more when we're at 85% of the scroll position
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent * 0.85) {
       if (!_isLoading && !_isLoadingMore && _hasMoreData) {
@@ -56,7 +57,7 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
         _isLoadingMore = true;
       } else {
         _isLoading = true;
-        _currentPage = 1; // Reset to first page for new searches
+        _currentPage = 1;
         _wallpapers = [];
         _hasMoreData = true;
         _totalHits = 0;
@@ -80,7 +81,6 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
             _wallpapers.addAll(hits);
             _isLoadingMore = false;
             // Check if we've reached the end of available data
-            // The API limits to 500 total hits per query, so we check against that
             if (hits.isEmpty || _wallpapers.length >= totalHits || _wallpapers.length >= 500) {
               _hasMoreData = false;
             }
@@ -90,7 +90,7 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
             _isLoading = false;
             _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
           }
-          // Increment page number AFTER loading data (following best practices)
+          // Increment page number AFTER loading data
           _currentPage++;
         });
       } else {
@@ -153,58 +153,55 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
               )
             : RefreshIndicator(
                 onRefresh: () => _loadWallpapers(),
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: GridView.builder(
-                        controller: _scrollController,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3, // 3 images per row as requested
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                          childAspectRatio: 0.7,
+                child: GridView.builder(
+                  controller: _scrollController,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3, // 3 images per row
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                    childAspectRatio: 0.7,
+                  ),
+                  itemCount: _wallpapers.length + (_hasMoreData && _isLoadingMore ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == _wallpapers.length && _hasMoreData && _isLoadingMore) {
+                      // Show loading indicator at the end
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
                         ),
-                        itemCount: _wallpapers.length + (_hasMoreData && _isLoadingMore ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (index == _wallpapers.length && _hasMoreData && _isLoadingMore) {
-                            // Show loading indicator at the end
-                            return const Center(
-                              child: CircularProgressIndicator(
-                                color: Colors.white,
-                              ),
-                            );
-                          }
-                          
-                          final wallpaper = _wallpapers[index];
-                          String imageUrl = wallpaper['webformatURL'];
-                          // Use smaller image for grid view
-                          imageUrl = imageUrl.replaceAll('_640', '_340');
-                          
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: CachedImage(
-                              imageUrl: imageUrl,
-                              width: double.infinity,
-                              fit: BoxFit.cover,
+                      );
+                    }
+                    
+                    final wallpaper = _wallpapers[index];
+                    String imageUrl = wallpaper['webformatURL'];
+                    // Use smaller image for grid view
+                    imageUrl = imageUrl.replaceAll('_640', '_340');
+                    
+                    // Use large image for full screen view
+                    String largeImageUrl = wallpaper['largeImageURL'];
+                    
+                    return GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => WallpaperDetailScreen(
+                              imageUrl: largeImageUrl,
+                              category: widget.category,
                             ),
-                          );
-                        },
-                      ),
-                    ),
-                    // Pagination numbers display - showing page/total pages
-                    if (_totalHits > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        child: Text(
-                          'Page ${_currentPage - 1} / ${((_totalHits - 1) ~/ _perPage) + 1}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
                           ),
+                        );
+                      },
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedImage(
+                          imageUrl: imageUrl,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
                         ),
                       ),
-                  ],
+                    );
+                  },
                 ),
               ),
       ),
