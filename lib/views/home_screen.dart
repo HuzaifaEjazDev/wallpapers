@@ -4,14 +4,14 @@ import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
-class WallpapersScreen extends StatefulWidget {
-  const WallpapersScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
 
   @override
-  State<WallpapersScreen> createState() => _WallpapersScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _WallpapersScreenState extends State<WallpapersScreen> {
+class _HomeScreenState extends State<HomeScreen> {
   List<dynamic> _wallpapers = [];
   bool _isLoading = false;
   bool _isLoadingMore = false;
