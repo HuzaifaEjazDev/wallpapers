@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
+import 'dart:async'; // For unawaited
 import 'views/home_screen.dart';
 import 'views/category_screen.dart';
 import 'views/settings_screen.dart';
+import 'services/pixabay_service.dart';
 
 void main() {
+  // Preload category data when the app starts
+  WidgetsFlutterBinding.ensureInitialized();
+  _preloadData();
+  
   runApp(const MyApp());
+}
+
+// Preload data in the background
+Future<void> _preloadData() async {
+  // Don't wait for this to complete, let it run in the background
+  unawaited(PixabayService.preloadCategories());
 }
 
 class MyApp extends StatelessWidget {
