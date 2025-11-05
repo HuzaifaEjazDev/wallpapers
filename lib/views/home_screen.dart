@@ -18,6 +18,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _hasMoreData = true;
   String _searchQuery = 'wallpapers';
   int _currentPage = 1;
+  int _displayPage = 1; // Add a separate variable for display
   int _currentIndex = 0;
   int _totalHits = 0;
   final int _perPage = 20;
@@ -45,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
       } else {
         _isLoading = true;
         _currentPage = 1; // Reset to first page for new searches
+        _displayPage = 1; // Reset display page as well
         _wallpapers = [];
         _hasMoreData = true;
         _totalHits = 0;
@@ -80,6 +82,8 @@ class _HomeScreenState extends State<HomeScreen> {
             _isLoading = false;
             _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
           }
+          // Update display page to match current page
+          _displayPage = _currentPage;
           // Increment page number AFTER loading data
           _currentPage++;
         });
@@ -301,7 +305,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   Container(
                                     padding: const EdgeInsets.symmetric(vertical: 16),
                                     child: Text(
-                                      'Page $_currentPage / ${(_totalHits > 0 ? ((_totalHits - 1) ~/ _perPage) + 1 : 1)}',
+                                      'Page $_displayPage / ${(_totalHits > 0 ? ((_totalHits - 1) ~/ _perPage) + 1 : 1)}',
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 16,
