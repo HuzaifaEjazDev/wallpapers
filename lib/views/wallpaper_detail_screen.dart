@@ -169,7 +169,7 @@ class WallpaperDetailScreen extends StatelessWidget {
   }
 }
 
-// Full-screen preview widget
+// Full-screen preview widget that shows how wallpaper will look
 class FullScreenPreview extends StatelessWidget {
   final String imageUrl;
 
@@ -183,13 +183,11 @@ class FullScreenPreview extends StatelessWidget {
         onTap: () => Navigator.pop(context),
         child: Container(
           constraints: const BoxConstraints.expand(),
-          child: Center(
-            child: CachedImage(
-              imageUrl: imageUrl,
-              width: double.infinity,
-              height: double.infinity,
-              fit: BoxFit.contain,
-            ),
+          child: CachedImage(
+            imageUrl: imageUrl,
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            fit: BoxFit.cover, // Cover to show how it would look as wallpaper
           ),
         ),
       ),
