@@ -163,7 +163,19 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
             ),
         ],
       ),
-      body: _buildBody(uniqueColors, hasColors, selectedColorVariant),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.center,
+            colors: [
+              Colors.green.shade900, // Dark green for top half
+              Colors.grey.shade900,  // Dark grey for bottom half
+            ],
+          ),
+        ),
+        child: _buildBody(uniqueColors, hasColors, selectedColorVariant),
+      ),
     );
   }
 
@@ -209,13 +221,7 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
           // Color Selection (if available)
           if (hasColors) _buildColorSelectionSection(uniqueColors),
 
-          // Size Selection
-          if (hasColors && _selectedColor != null)
-            _buildSizeSelectionSection()
-          else if (!hasColors)
-            _buildDirectVariantSelection(),
-
-          // Action Button
+          // Action Button at the end
           if (_selectedVariant != null)
             Padding(
               padding: const EdgeInsets.all(24),
@@ -237,6 +243,16 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
                 label: const Text('Proceed to Mockup Generation'),
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color(0xFF6C63FF), // Purple background
+                  foregroundColor: Colors.white, // White text
+                  textStyle: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 8,
                 ),
               ),
             ),
@@ -384,88 +400,14 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
 
   /// Builds the size selection section for selected color
   Widget _buildSizeSelectionSection() {
-    final colorVariants = _getVariantsForSelectedColor();
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Choose Size',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: colorVariants.map((variant) {
-              final isSelected = _selectedVariant?.id == variant.id;
-              return FilterChip(
-                label: Text(variant.size ?? 'Standard'),
-                selected: isSelected,
-                onSelected: (selected) {
-                  if (mounted) {
-                    setState(() {
-                      _selectedVariant = variant;
-                      _selectedPlacement = null;
-                    });
-                  }
-                  // Load printfiles only if the widget is still mounted
-                  if (mounted) {
-                    _loadPrintfiles();
-                  }
-                },
-                selectedColor: const Color(0xFF6C63FF),
-                checkmarkColor: Colors.white,
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
+    // Hide the size selection UI as requested
+    return Container();
   }
 
   /// Builds direct variant selection when no colors are available
   Widget _buildDirectVariantSelection() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Choose Variant',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: _variants.map((variant) {
-              final isSelected = _selectedVariant?.id == variant.id;
-              return FilterChip(
-                label: Text(variant.name ?? variant.size ?? 'Standard'),
-                selected: isSelected,
-                onSelected: (selected) {
-                  if (mounted) {
-                    setState(() {
-                      _selectedVariant = variant;
-                      _selectedPlacement = null;
-                    });
-                  }
-                  // Load printfiles only if the widget is still mounted
-                  if (mounted) {
-                    _loadPrintfiles();
-                  }
-                },
-                selectedColor: const Color(0xFF6C63FF),
-                checkmarkColor: Colors.white,
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-    );
+    // Hide the variant selection UI as requested
+    return Container();
   }
 
   /// Builds the printfile options section UI

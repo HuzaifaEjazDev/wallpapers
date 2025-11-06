@@ -94,87 +94,99 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
             ),
         ],
       ),
-      body: Consumer<MockupProvider>(
-        builder: (context, provider, child) {
-          if (provider.error != null) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Error generating mockup',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[400]),
-                  ),
-                  const SizedBox(height: 8),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Text(
-                      provider.error!,
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                      textAlign: TextAlign.center,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.center,
+            colors: [
+              Colors.green.shade900, // Dark green for top half
+              Colors.grey.shade900,  // Dark grey for bottom half
+            ],
+          ),
+        ),
+        child: Consumer<MockupProvider>(
+          builder: (context, provider, child) {
+            if (provider.error != null) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error generating mockup',
+                      style: TextStyle(fontSize: 18, color: Colors.grey[400]),
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Go Back'),
-                  ),
-                ],
-              ),
-            );
-          }
+                    const SizedBox(height: 8),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 32),
+                      child: Text(
+                        provider.error!,
+                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Go Back'),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-          final result = provider.mockupResult;
-          if (result == null) {
-            return _buildLoadingState();
-          }
+            final result = provider.mockupResult;
+            if (result == null) {
+              return _buildLoadingState();
+            }
 
-          final status = result['status'];
+            final status = result['status'];
 
-          if (status == 'pending' || status == 'processing') {
-            return _buildLoadingState();
-          }
+            if (status == 'pending' || status == 'processing') {
+              return _buildLoadingState();
+            }
 
-          if (status == 'failed') {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Mockup generation failed',
-                    style: TextStyle(fontSize: 18, color: Colors.grey[400]),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text('Try Again'),
-                  ),
-                ],
-              ),
-            );
-          }
+            if (status == 'failed') {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline, size: 64, color: Colors.red[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Mockup generation failed',
+                      style: TextStyle(fontSize: 18, color: Colors.grey[400]),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: const Text('Try Again'),
+                    ),
+                  ],
+                ),
+              );
+            }
 
-          // Status is completed
-          final mockups = result['mockups'] as List?;
-          if (mockups == null || mockups.isEmpty) {
-            return Center(
-              child: Text(
-                'No mockups generated',
-                style: TextStyle(fontSize: 16, color: Colors.grey[400]),
-              ),
-            );
-          }
+            // Status is completed
+            final mockups = result['mockups'] as List?;
+            if (mockups == null || mockups.isEmpty) {
+              return Center(
+                child: Text(
+                  'No mockups generated',
+                  style: TextStyle(fontSize: 16, color: Colors.grey[400]),
+                ),
+              );
+            }
 
-          return _buildMockupGallery(mockups);
-        },
+            return _buildMockupGallery(mockups);
+          },
+        ),
       ),
     );
   }
