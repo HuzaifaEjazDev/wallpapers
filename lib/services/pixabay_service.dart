@@ -75,12 +75,38 @@ class PixabayService {
     _categoryCache = wallpapers;
   }
 
+  /// Fetch wallpapers by search query with vertical orientation
+  static Future<Map<String, dynamic>> fetchWallpapersBySearch(
+      String query, int perPage, int page) async {
+    // Use orientation=vertical to get vertical images
+    // Remove min_width and min_height to avoid limiting results
+    final url = Uri.parse(
+        '$_baseUrl?key=$_apiKey&q=$query&image_type=photo&per_page=$perPage&page=$page&safesearch=true&order=relevant&orientation=vertical');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'hits': List.from(data['hits']),
+          'totalHits': data['totalHits'] ?? 0,
+        };
+      } else {
+        throw Exception('Failed to load wallpapers: ${response.statusCode}');
+      }
+    } catch (error) {
+      throw Exception('Failed to load wallpapers: $error');
+    }
+  }
+
   /// Fetch wallpapers by category with vertical orientation
   static Future<List<dynamic>> fetchWallpapersByCategory(
       String category, int perPage) async {
-    // Added orientation=vertical parameter to get vertical images
+    // Use orientation=vertical to get vertical images
+    // Remove min_width and min_height to avoid limiting results
     final url = Uri.parse(
-        '$_baseUrl?key=$_apiKey&category=$category&image_type=all&per_page=$perPage&safesearch=true&order=popular&orientation=vertical&min_width=150&min_height=100');
+        '$_baseUrl?key=$_apiKey&category=$category&image_type=all&per_page=$perPage&safesearch=true&order=popular&orientation=vertical');
 
     try {
       final response = await http.get(url);
@@ -88,6 +114,31 @@ class PixabayService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         return List.from(data['hits']);
+      } else {
+        throw Exception('Failed to load wallpapers: ${response.statusCode}');
+      }
+    } catch (error) {
+      throw Exception('Failed to load wallpapers: $error');
+    }
+  }
+
+  /// Fetch wallpapers by category with vertical orientation and return total hits
+  static Future<Map<String, dynamic>> fetchWallpapersByCategoryWithPagination(
+      String category, int perPage, int page) async {
+    // Use orientation=vertical to get vertical images
+    // Remove min_width and min_height to avoid limiting results
+    final url = Uri.parse(
+        '$_baseUrl?key=$_apiKey&category=$category&image_type=all&per_page=$perPage&page=$page&safesearch=true&order=popular&orientation=vertical');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return {
+          'hits': List.from(data['hits']),
+          'totalHits': data['totalHits'] ?? 0,
+        };
       } else {
         throw Exception('Failed to load wallpapers: ${response.statusCode}');
       }

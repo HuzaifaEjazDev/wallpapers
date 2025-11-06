@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../services/pexels_service.dart';
 import '../widgets/cached_image.dart';
 import 'wallpaper_detail_screen.dart';
 
@@ -65,48 +64,31 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
     });
 
     try {
-      // Using Pixabay API with proper pagination parameters and orientation
-      final url = Uri.parse(
-          'https://pixabay.com/api/?key=$_apiKey&category=${widget.category}&image_type=photo&per_page=$_perPage&page=$_currentPage&safesearch=true&order=popular&orientation=vertical&min_width=300&min_height=200&lang=en');
-
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List hits = data['hits'];
-        final int totalHits = data['totalHits'] ?? 0;
-        
-        setState(() {
-          if (loadMore) {
-            _wallpapers.addAll(hits);
-            _isLoadingMore = false;
-            // Check if we've reached the end of available data
-            if (hits.isEmpty || _wallpapers.length >= totalHits || _wallpapers.length >= 500) {
-              _hasMoreData = false;
-            }
-          } else {
-            _wallpapers = hits;
-            _totalHits = totalHits;
-            _isLoading = false;
-            _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
+      // Use only the Pexels service to fetch wallpapers
+      final result = await PexelsService.fetchWallpapersByCategoryWithPagination(
+          widget.category, _perPage, _currentPage);
+      
+      final List hits = result['hits'];
+      final int totalHits = result['totalHits'] ?? 0;
+      
+      setState(() {
+        if (loadMore) {
+          _wallpapers.addAll(hits);
+          _isLoadingMore = false;
+          // Check if we've reached the end of available data
+          // The API limits to 500 total hits per query, so we check against that
+          if (hits.isEmpty || _wallpapers.length >= totalHits || _wallpapers.length >= 500) {
+            _hasMoreData = false;
           }
-          // Increment page number AFTER loading data
-          _currentPage++;
-        });
-      } else {
-        setState(() {
-          if (loadMore) {
-            _isLoadingMore = false;
-          } else {
-            _isLoading = false;
-          }
-        });
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to load wallpapers: ${response.statusCode}')),
-          );
+        } else {
+          _wallpapers = hits;
+          _totalHits = totalHits;
+          _isLoading = false;
+          _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
         }
-      }
+        // Increment page number AFTER loading data
+        _currentPage++;
+      });
     } catch (error) {
       setState(() {
         if (loadMore) {
@@ -173,12 +155,11 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
                     }
                     
                     final wallpaper = _wallpapers[index];
-                    String imageUrl = wallpaper['webformatURL'];
-                    // Use smaller image for grid view
-                    imageUrl = imageUrl.replaceAll('_640', '_340');
+                    // Use Pexels image URL structure
+                    String imageUrl = wallpaper['src']['medium'];
                     
                     // Use large image for full screen view
-                    String largeImageUrl = wallpaper['largeImageURL'];
+                    String largeImageUrl = wallpaper['src']['large2x'];
                     
                     return GestureDetector(
                       onTap: () {

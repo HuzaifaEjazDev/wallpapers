@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../services/pixabay_service.dart';
+import '../services/pexels_service.dart';
 import '../widgets/cached_image.dart';
 import 'category_wallpapers_screen.dart';
 
@@ -27,34 +27,26 @@ class _CategoryScreenState extends State<CategoryScreen> {
     });
 
     try {
-      // Check if data is already cached and we're not forcing a refresh
-      if (PixabayService.isDataCached() && !forceRefresh) {
-        // Use cached data
-        _categories = PixabayService.getCachedCategories();
-        for (String category in _categories) {
-          final wallpapers = PixabayService.getCachedWallpapers(category);
-          if (wallpapers != null) {
+      // Define a list of categories
+      final List<String> categories = [
+        'backgrounds', 'fashion', 'nature', 'science', 'education', 'feelings',
+        'health', 'people', 'religion', 'places', 'animals', 'industry',
+        'computer', 'food', 'sports', 'transportation', 'travel', 'buildings',
+        'business', 'music'
+      ];
+      
+      // Get random 5 categories
+      final List<String> shuffled = List.from(categories)..shuffle();
+      _categories = shuffled.take(5).toList();
+      
+      // Fetch 5 wallpapers for each category using Pexels API
+      for (String category in _categories) {
+        final wallpapers = await PexelsService.fetchWallpapersByCategory(category, 5);
+        if (mounted) {
+          setState(() {
             _categoryWallpapers[category] = wallpapers;
-          }
+          });
         }
-      } else {
-        // Fetch new data
-        _categories = PixabayService.getRandomCategories();
-        
-        // Fetch 5 wallpapers for each category
-        Map<String, List<dynamic>> newWallpapers = {};
-        for (String category in _categories) {
-          final wallpapers = await PixabayService.fetchWallpapersByCategory(category, 5);
-          newWallpapers[category] = wallpapers;
-          if (mounted) {
-            setState(() {
-              _categoryWallpapers[category] = wallpapers;
-            });
-          }
-        }
-        
-        // Update cache with new data for next app start
-        PixabayService.updateCache(_categories, newWallpapers);
       }
     } catch (error) {
       if (mounted) {
@@ -72,10 +64,8 @@ class _CategoryScreenState extends State<CategoryScreen> {
   }
 
   String _getThumbnailUrl(dynamic wallpaper) {
-    // Use webformatURL and modify it to get a smaller size
-    String webformatUrl = wallpaper['webformatURL'];
-    // Replace _640 with _340 to get a smaller thumbnail
-    return webformatUrl.replaceAll('_640', '_340');
+    // Use Pexels image URL structure for thumbnails
+    return wallpaper['src']['medium'];
   }
 
   Future<void> _refreshData() async {

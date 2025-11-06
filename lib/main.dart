@@ -3,6 +3,7 @@ import 'dart:async'; // For unawaited
 import 'views/home_screen.dart';
 import 'views/category_screen.dart';
 import 'views/settings_screen.dart';
+import 'views/mokup_screen.dart'; // Add this import
 import 'services/pixabay_service.dart';
 
 void main() {
@@ -53,6 +54,7 @@ class _MainScreenState extends State<MainScreen> {
     const HomeScreen(),
     const CategoryScreen(),
     const SettingsScreen(),
+    const MokupScreen(), // Add MockupScreen as the last screen
   ];
 
   @override
@@ -68,7 +70,7 @@ class _MainScreenState extends State<MainScreen> {
         },
         backgroundColor: Colors.grey.shade900,
         selectedItemColor: Colors.greenAccent,
-        unselectedItemColor: Colors.grey,
+        unselectedItemColor: Colors.grey[100],
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -77,6 +79,10 @@ class _MainScreenState extends State<MainScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.category),
             label: 'Category',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.auto_awesome), // Use a different icon for Mockup
+            label: 'Mockup',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),

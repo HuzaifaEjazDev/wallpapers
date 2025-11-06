@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
-// ignore: depend_on_referenced_packages
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../services/pexels_service.dart';
+import 'wallpaper_detail_screen.dart';
+import 'mokup_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -56,49 +56,34 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       // Add double quotes around the query
       final quotedQuery = '"$_searchQuery"';
-      final encodedQuery = Uri.encodeQueryComponent(quotedQuery);
-      final url = Uri.parse(
-          'https://pixabay.com/api/?key=53072685-0770a12c564f2eb7a535baeb1&q="$encodedQuery"&image_type=photo&category=backgrounds&per_page=$_perPage&page=$_currentPage&safesearch=true&order=relevant&min_width=1024&min_height=768&lang=en');
-
-      final response = await http.get(url);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        final List hits = data['hits'];
-        final int totalHits = data['totalHits'] ?? 0;
-        
-        setState(() {
-          if (loadMore) {
-            _wallpapers.addAll(hits);
-            _isLoadingMore = false;
-            // Check if we've reached the end of available data
-            // The API limits to 500 total hits per query, so we check against that
-            if (hits.isEmpty || _wallpapers.length >= totalHits || _wallpapers.length >= 500) {
-              _hasMoreData = false;
-            }
-          } else {
-            _wallpapers = hits;
-            _totalHits = totalHits;
-            _isLoading = false;
-            _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
+      
+      // Use only the Pexels service to fetch wallpapers
+      final result = await PexelsService.fetchWallpapersBySearch(
+          quotedQuery, _perPage, _currentPage);
+      
+      final List hits = result['hits'];
+      final int totalHits = result['totalHits'] ?? 0;
+      
+      setState(() {
+        if (loadMore) {
+          _wallpapers.addAll(hits);
+          _isLoadingMore = false;
+          // Check if we've reached the end of available data
+          // The API limits to 500 total hits per query, so we check against that
+          if (hits.isEmpty || _wallpapers.length >= totalHits || _wallpapers.length >= 500) {
+            _hasMoreData = false;
           }
-          // Update display page to match current page
-          _displayPage = _currentPage;
-          // Increment page number AFTER loading data
-          _currentPage++;
-        });
-      } else {
-        setState(() {
-          if (loadMore) {
-            _isLoadingMore = false;
-          } else {
-            _isLoading = false;
-          }
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load wallpapers: ${response.statusCode}')),
-        );
-      }
+        } else {
+          _wallpapers = hits;
+          _totalHits = totalHits;
+          _isLoading = false;
+          _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
+        }
+        // Update display page to match current page
+        _displayPage = _currentPage;
+        // Increment page number AFTER loading data
+        _currentPage++;
+      });
     } catch (error) {
       setState(() {
         if (loadMore) {
@@ -170,7 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   IconButton(
                     icon: const Icon(Icons.sort, color: Colors.white),
                     onPressed: () {
-                      // Filter functionality
+                      // Filter functionality (to be implemented)
                     },
                   ),
                 ],
@@ -246,58 +231,74 @@ class _HomeScreenState extends State<HomeScreen> {
                                         verticalThresholdPercentage,
                                       ) {
                                         final wallpaper = _wallpapers[index];
-                                        return Center(
-                                          child: Container(
-                                            height: MediaQuery.of(context).size.height * 0.6,
-                                            width: MediaQuery.of(context).size.width * 0.8,
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(16),
-                                              boxShadow: [
-                                                BoxShadow(
-                                                  color: Colors.black.withOpacity(0.3),
-                                                  blurRadius: 10,
-                                                  offset: const Offset(0, 5),
+                                        return GestureDetector(
+                                          onTap: () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) => WallpaperDetailScreen(
+                                                  // Use Pexels image URL structure
+                                                  imageUrl: wallpaper['src']['large2x'],
+                                                  category: 'wallpapers', // Default category for home screen images
                                                 ),
-                                              ],
-                                            ),
-                                            child: ClipRRect(
-                                              borderRadius: BorderRadius.circular(16),
-                                              child: Image.network(
-                                                wallpaper['largeImageURL'],
-                                                fit: BoxFit.cover,
-                                                loadingBuilder: (context, child, loadingProgress) {
-                                                  // Show a subtle loading indicator only
-                                                  if (loadingProgress == null) return child;
-                                                  return Container(
-                                                    color: Colors.grey[800],
-                                                    child: Center(
-                                                      child: CircularProgressIndicator(
-                                                        value: loadingProgress.expectedTotalBytes != null
-                                                            ? loadingProgress.cumulativeBytesLoaded /
-                                                                loadingProgress.expectedTotalBytes!
-                                                            : null,
-                                                        color: Colors.white38,
-                                                        strokeWidth: 2,
+                                              ),
+                                            );
+                                          },
+                                          child: Center(
+                                            child: Container(
+                                              height: MediaQuery.of(context).size.height * 0.6, // 60% of screen height
+                                              width: MediaQuery.of(context).size.width * 0.8, // 80% of screen width
+                                              decoration: BoxDecoration(
+                                                borderRadius: BorderRadius.circular(16),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withOpacity(0.3),
+                                                    blurRadius: 10,
+                                                    offset: const Offset(0, 5),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: ClipRRect(
+                                                borderRadius: BorderRadius.circular(16),
+                                                child: Image.network(
+                                                  // Use Pexels image URL structure
+                                                  wallpaper['src']['large2x'],
+                                                  fit: BoxFit.contain, // Changed to contain for proper vertical display
+                                                  loadingBuilder: (context, child, loadingProgress) {
+                                                    // Show a subtle loading indicator only
+                                                    if (loadingProgress == null) return child;
+                                                    return Container(
+                                                      color: Colors.grey[800],
+                                                      child: Center(
+                                                        child: CircularProgressIndicator(
+                                                          value: loadingProgress.expectedTotalBytes != null
+                                                              ? loadingProgress.cumulativeBytesLoaded /
+                                                                  loadingProgress.expectedTotalBytes!
+                                                              : null,
+                                                          color: Colors.white38,
+                                                          strokeWidth: 2,
+                                                        ),
                                                       ),
-                                                    ),
-                                                  );
-                                                },
-                                                errorBuilder: (context, error, stackTrace) {
-                                                  return Container(
-                                                    color: Colors.grey[800],
-                                                    child: const Center(
-                                                      child: Icon(
-                                                        Icons.error_outline,
-                                                        color: Colors.white,
-                                                        size: 48,
+                                                    );
+                                                  },
+                                                  errorBuilder: (context, error, stackTrace) {
+                                                    return Container(
+                                                      color: Colors.grey[800],
+                                                      child: const Center(
+                                                        child: Icon(
+                                                          Icons.error_outline,
+                                                          color: Colors.white,
+                                                          size: 48,
+                                                        ),
                                                       ),
-                                                    ),
-                                                  );
-                                                },
+                                                    );
+                                                  },
+                                                ),
                                               ),
                                             ),
                                           ),
                                         );
+
                                       },
                                     ),
                                   ),
