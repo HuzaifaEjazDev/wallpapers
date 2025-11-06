@@ -134,6 +134,7 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
         width: 1800,
         imageUrl: imageUrl, // Use the ImgBB URL instead of static URL
         placementStyle: 'fit', // Use fit positioning by default
+        placement: _selectedPlacement!,
         printfileWidth: 1800,
         printfileHeight: 2400,
       );

@@ -125,8 +125,8 @@ class ApiService {
 
   /// Gets catalog product variants
   static Future<Map<String, dynamic>> getCatalogProductVariants(
-    int productId,
-  ) async {
+      int productId,
+      ) async {
     final response = await http.get(
       Uri.parse('$baseUrl/products/$productId'),
       headers: headers,
@@ -157,18 +157,18 @@ class ApiService {
 
   /// Gets product variant printfiles for mockup generation
   static Future<Map<String, dynamic>> getProductVariantPrintfiles(
-    int productId, {
-    String? orientation,
-    String? technique,
-    String? storeId,
-  }) async {
+      int productId, {
+        String? orientation,
+        String? technique,
+        String? storeId,
+      }) async {
     final uri = Uri.parse('$baseUrl/mockup-generator/printfiles/$productId')
         .replace(
-          queryParameters: {
-            if (orientation != null) 'orientation': orientation,
-            if (technique != null) 'technique': technique,
-          },
-        );
+      queryParameters: {
+        if (orientation != null) 'orientation': orientation,
+        if (technique != null) 'technique': technique,
+      },
+    );
 
     final headersWithStore = Map<String, String>.from(headers);
     if (storeId != null) {
@@ -262,57 +262,59 @@ class ApiService {
     required int variantId,
     required String format,
     required int width,
-    required String imageUrl, // This will now be the ImgBB URL
+    required String imageUrl,
     required String placementStyle,
+    required String placement,
     int? printfileWidth,
     int? printfileHeight,
     Map<String, dynamic>? productOptions,
   }) async {
+    print('Placement Style: $placement');
     // Get available printfiles to determine valid placements
-    String placement = 'default';
-    List<String> fallbackPlacements = [
-      'embroidery_front',
-      'embroidery_left',
-      'embroidery_right', // Most common for hats
-      'front', 'back', 'left_chest', 'right_chest',
-      'center_front', 'label', 'default',
-    ];
+    // String placement = 'default';
+    // List<String> fallbackPlacements = [
+    //   'embroidery_front',
+    //   'embroidery_left',
+    //   'embroidery_right', // Most common for hats
+    //   'front', 'back', 'left_chest', 'right_chest',
+    //   'center_front', 'label', 'default',
+    // ];
 
-    try {
-      final printfilesResponse = await getProductVariantPrintfiles(productId);
-      final result = printfilesResponse['result'] as Map<String, dynamic>;
+    // try {
+    //   final printfilesResponse = await getProductVariantPrintfiles(productId);
+    //   final result = printfilesResponse['result'] as Map<String, dynamic>;
 
-      // Extract placements from variant_printfiles
-      final variantPrintfiles = result['variant_printfiles'] as List? ?? [];
+    // Extract placements from variant_printfiles
+    // final variantPrintfiles = result['variant_printfiles'] as List? ?? [];
 
-      if (variantPrintfiles.isNotEmpty) {
-        // Find the specific variant or use the first one
-        final targetVariant =
-            variantPrintfiles.firstWhere(
-                  (vp) => vp['variant_id'] == variantId,
-                  orElse: () => variantPrintfiles.first,
-                )
-                as Map<String, dynamic>;
+    // if (variantPrintfiles.isNotEmpty) {
+    //   // Find the specific variant or use the first one
+    //   final targetVariant =
+    //       variantPrintfiles.firstWhere(
+    //             (vp) => vp['variant_id'] == variantId,
+    //             orElse: () => variantPrintfiles.first,
+    //           )
+    //           as Map<String, dynamic>;
 
-        final placements = targetVariant['placements'] as Map<String, dynamic>?;
-        if (placements != null && placements.isNotEmpty) {
-          // Use the first available placement
-          placement = placements.keys.first;
-        }
-      }
+    //   final placements = targetVariant['placements'] as Map<String, dynamic>?;
+    //   if (placements != null && placements.isNotEmpty) {
+    //     // Use the first available placement
+    //     placement = placements.keys.first;
+    //   }
+    // }
 
-      // Fallback to available_placements if variant_printfiles doesn't work
-      if (placement == 'default') {
-        final availablePlacements =
-            result['available_placements'] as Map<String, dynamic>?;
-        if (availablePlacements != null && availablePlacements.isNotEmpty) {
-          placement = availablePlacements.keys.first;
-        }
-      }
-    } catch (e) {
-      // If printfiles API fails, we'll try multiple common placements
-      placement = fallbackPlacements.first; // Start with first fallback
-    }
+    // Fallback to available_placements if variant_printfiles doesn't work
+    // if (placement == 'default') {
+    //   final availablePlacements =
+    //       result['available_placements'] as Map<String, dynamic>?;
+    //   if (availablePlacements != null && availablePlacements.isNotEmpty) {
+    //     placement = availablePlacements.keys.first;
+    //   }
+    // }
+    // } catch (e) {
+    //   // If printfiles API fails, we'll try multiple common placements
+    //   placement = fallbackPlacements.first; // Start with first fallback
+    // }
 
     // Calculate positioning based on placement style
     final position = _calculatePosition(
@@ -339,11 +341,13 @@ class ApiService {
       'files': [
         {
           'placement': placement,
-          'image_url': imageUrl, // Use the passed imageUrl parameter (ImgBB URL)
+          'image_url': 'https://i.ibb.co/B5XhsDZj/avo-mascot.png',
           'position': position,
         },
       ],
     });
+
+    print(body);
 
     final response = await http.post(
       Uri.parse('$baseUrl/mockup-generator/create-task/$productId'),
@@ -400,8 +404,8 @@ class ApiService {
 
   /// Checks the status of a mockup generation task
   static Future<Map<String, dynamic>> checkMockupTaskStatusV1(
-    String taskKey,
-  ) async {
+      String taskKey,
+      ) async {
     final response = await http.get(
       Uri.parse('$baseUrl/mockup-generator/task?task_key=$taskKey'),
       headers: headers,
@@ -425,7 +429,7 @@ class ApiService {
   }) {
     switch (placementStyle) {
       case 'fit':
-        // Fit the image within the print area while maintaining aspect ratio
+      // Fit the image within the print area while maintaining aspect ratio
         final aspectRatio = imageWidth / printfileHeight;
         final fittedWidth = printfileWidth;
         final fittedHeight = (printfileWidth / aspectRatio).round();
@@ -439,7 +443,7 @@ class ApiService {
         };
 
       case 'fill':
-        // Fill the entire print area
+      // Fill the entire print area
         return {
           'area_width': printfileWidth,
           'area_height': printfileHeight,
@@ -450,7 +454,7 @@ class ApiService {
         };
 
       case 'sticker':
-        // Center the image as a sticker
+      // Center the image as a sticker
         final stickerSize = (printfileWidth * 0.8).round();
         return {
           'area_width': printfileWidth,
@@ -463,7 +467,7 @@ class ApiService {
 
       case 'reset':
       default:
-        // Default positioning
+      // Default positioning
         return {
           'area_width': printfileWidth,
           'area_height': printfileHeight,

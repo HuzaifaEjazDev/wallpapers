@@ -126,6 +126,17 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
       if (mounted) {
         setState(() {
           _printfileResult = result;
+          // Auto-select the placement if there's only one option available
+          if (_printfileResult != null && _selectedPlacement == null) {
+            final variantPrintfile = _printfileResult!.variant_printfiles
+                .where((vp) => vp.variant_id == _selectedVariant!.id)
+                .firstOrNull;
+            
+            // Only auto-select if there's exactly one placement option
+            if (variantPrintfile != null && variantPrintfile.placements.length == 1) {
+              _selectedPlacement = variantPrintfile.placements.keys.first;
+            }
+          }
         });
       }
     } catch (e) {
@@ -663,6 +674,13 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
       );
     }
 
+    // Auto-select the placement if there's only one option available and none is selected yet
+    if (variantPrintfile.placements.length == 1 && _selectedPlacement == null) {
+      setState(() {
+        _selectedPlacement = variantPrintfile.placements.keys.first;
+      });
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -676,7 +694,7 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
         ),
         const SizedBox(height: 12),
 
-        // Horizontal scrollable list of placement chips
+        // Horizontal scrollable list of placement chips (show all options including single)
         SizedBox(
           height: 50,
           child: ListView.builder(
