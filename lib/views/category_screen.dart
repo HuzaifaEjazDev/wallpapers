@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/pexels_service.dart';
 import '../widgets/cached_image.dart';
 import 'category_wallpapers_screen.dart';
+import 'wallpaper_detail_screen.dart';
 
 class CategoryScreen extends StatefulWidget {
   const CategoryScreen({super.key});
@@ -165,10 +166,25 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                   right: 8.0,
                                   bottom: 16.0,
                                 ),
-                                child: CachedImage(
-                                  imageUrl: imageUrl,
-                                  width: MediaQuery.of(context).size.width * 0.25,
-                                  borderRadius: BorderRadius.circular(12),
+                                child: GestureDetector(
+                                  onTap: () {
+                                    // Use large image for full screen view
+                                    String largeImageUrl = wallpaper['src']['large2x'];
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => WallpaperDetailScreen(
+                                          imageUrl: largeImageUrl,
+                                          category: category,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: CachedImage(
+                                    imageUrl: imageUrl,
+                                    width: MediaQuery.of(context).size.width * 0.25,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
                                 ),
                               );
                             },
