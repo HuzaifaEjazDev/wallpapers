@@ -329,8 +329,8 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
                         label: const Text('Gallery'),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: Color(0xFF6C63FF)),
-                          foregroundColor: const Color(0xFF6C63FF),
+                          side: const BorderSide(color: Colors.white), // White border
+                          foregroundColor: Colors.white, // White text
                         ),
                       ),
                     ),
@@ -342,8 +342,8 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
                         label: const Text('Camera'),
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
-                          side: const BorderSide(color: Color(0xFF6C63FF)),
-                          foregroundColor: const Color(0xFF6C63FF),
+                          side: const BorderSide(color: Colors.white), // White border
+                          foregroundColor: Colors.white, // White text
                         ),
                       ),
                     ),
@@ -358,6 +358,8 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
                     onPressed: _isGenerating || _isUploading ? null : _generateMockup,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 18),
+                      backgroundColor: const Color(0xFF6C63FF), // Purple background
+                      foregroundColor: Colors.white, // White text
                       disabledBackgroundColor: Colors.grey[800],
                     ),
                     child: _isGenerating
@@ -376,7 +378,7 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
                                     ),
                                   ),
                                   SizedBox(width: 12),
-                                  Text('Uploading Image...'),
+                                  Text('Uploading Image...', style: TextStyle(color: Colors.white)),
                                 ],
                               )
                             : const Row(
@@ -393,7 +395,7 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
                                     ),
                                   ),
                                   SizedBox(width: 12),
-                                  Text('Generating Mockup...'),
+                                  Text('Generating Mockup...', style: TextStyle(color: Colors.white)),
                                 ],
                               )
                         : const Text(
@@ -401,6 +403,7 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white, // White text
                             ),
                           ),
                   ),
@@ -613,7 +616,7 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
                 margin: const EdgeInsets.only(right: 12),
                 child: FilterChip(
                   label: Text(
-                    placementName,
+                    _formatPlacementName(placementName),
                     style: TextStyle(
                       fontWeight: isSelected
                           ? FontWeight.bold
@@ -639,7 +642,7 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
                         ? Colors.blue.shade400
                         : Colors.grey.shade400,
                   ),
-                  tooltip: '$placementDescription\nPrintfile ID: $printfileId',
+                  tooltip: '${_formatPlacementName(placementDescription)}\nPrintfile ID: $printfileId',
                 ),
               );
             },
@@ -647,5 +650,22 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
         ),
       ],
     );
+  }
+
+  /// Formats placement name for display: capitalize first letter and replace underscores with spaces
+  String _formatPlacementName(String name) {
+    if (name.isEmpty) return name;
+    
+    // Replace underscores with spaces
+    String formatted = name.replaceAll('_', ' ');
+    
+    // Capitalize first letter
+    if (formatted.length > 1) {
+      formatted = '${formatted[0].toUpperCase()}${formatted.substring(1)}';
+    } else {
+      formatted = formatted.toUpperCase();
+    }
+    
+    return formatted;
   }
 }
