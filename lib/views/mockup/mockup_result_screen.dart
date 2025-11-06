@@ -254,7 +254,7 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
                   child: const Icon(
                     Icons.check_circle,
                     size: 48,
-                    color: Color(0xFF6C63FF),
+                    color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 16),

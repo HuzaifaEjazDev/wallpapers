@@ -155,9 +155,9 @@ class _MockupCategoryScreenState extends State<MockupCategoryScreen>
 
   Widget _buildCategoryCard(CategoryModel category, int index) {
     return Card(
-      margin: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(8), // Reduced space between containers
       elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)), // Increased radius
       child: InkWell(
         /// Handles category selection and navigation
         onTap: () {
@@ -166,9 +166,8 @@ class _MockupCategoryScreenState extends State<MockupCategoryScreen>
         child: Stack(
           children: [
             Container(
-              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(24), // Match the increased radius
                 color: Colors.grey[800],
                 image: DecorationImage(
                   image: NetworkImage(category.image_url!),
@@ -176,12 +175,17 @@ class _MockupCategoryScreenState extends State<MockupCategoryScreen>
                 ),
               ),
             ),
-            const DecoratedBox(
+            // Added black gradient layer from bottom
+            Container(
               decoration: BoxDecoration(
-                gradient: LinearGradient(
+                borderRadius: BorderRadius.circular(24), // Match the increased radius
+                gradient: const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black],
+                  colors: [
+                    Colors.transparent,
+                    Colors.black54, // Semi-transparent black gradient
+                  ],
                 ),
               ),
             ),
@@ -189,13 +193,14 @@ class _MockupCategoryScreenState extends State<MockupCategoryScreen>
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.end, // Align text to bottom
                 children: [
                   Text(
                     category.title,
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: Colors.white, // White text color
                     ),
                   ),
                 ],
