@@ -1,8 +1,14 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:io';
+import 'dart:typed_data';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'dart:async';
+import 'dart:io' show Platform;
 
 import '../../models/mockup/product_model.dart';
 import '../../viewmodels/mockup_provider.dart';
@@ -344,22 +350,25 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
                               Expanded(
                                 child: OutlinedButton.icon(
                                   onPressed: () {
-                                    // Download functionality
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Downloading: $displayName',
+                                    // Check if mockupUrl is not null before downloading
+                                    if (mockupUrl != null) {
+                                      _downloadMockupImage(mockupUrl, displayName);
+                                    } else {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Unable to download: Invalid image URL'),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    }
                                   },
                                   icon: const Icon(Icons.download),
                                   label: const Text('Download'),
                                   style: OutlinedButton.styleFrom(
                                     side: const BorderSide(
-                                      color: Color(0xFF6C63FF),
+                                      color: Colors.white, // White border
                                     ),
-                                    foregroundColor: const Color(0xFF6C63FF),
+                                    foregroundColor: Colors.white, // White text
+                                    padding: const EdgeInsets.symmetric(vertical: 16),
                                   ),
                                 ),
                               ),
@@ -406,6 +415,73 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
         return _FullScreenImageViewer(imageUrl: imageUrl, title: title);
       },
     );
+  }
+
+  /// Downloads the mockup image to device Download directory
+  Future<void> _downloadMockupImage(String imageUrl, String fileName) async {
+    try {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Downloading: $fileName'),
+        ),
+      );
+      
+      // Request storage permission
+      final status = await Permission.storage.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Permission denied to save image'),
+          ),
+        );
+        return;
+      }
+      
+      // Download image data
+      final response = await http.get(Uri.parse(imageUrl));
+      
+      if (response.statusCode == 200) {
+        // Get the Download directory
+        final directory = await getExternalStorageDirectory();
+        String downloadPath;
+        
+        if (Platform.isAndroid) {
+          // For Android, navigate to the Download directory
+          downloadPath = '${directory!.path.split('/Android')[0]}/Download';
+        } else {
+          // For other platforms, use the documents directory
+          final docDir = await getApplicationDocumentsDirectory();
+          downloadPath = docDir.path;
+        }
+        
+        // Create a file name
+        final sanitizedFileName = fileName.replaceAll(RegExp(r'[^\w\s\.-]'), '_');
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final filePath = '$downloadPath/${sanitizedFileName}_$timestamp.png';
+        
+        // Write image data to file
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Image saved to Downloads: $sanitizedFileName.png'),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to download image: ${response.statusCode}'),
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to download image: $e'),
+        ),
+      );
+    }
   }
 }
 
