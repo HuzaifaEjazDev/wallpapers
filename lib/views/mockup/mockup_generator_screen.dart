@@ -79,6 +79,17 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
 
       setState(() {
         _printfileResult = result;
+        // Auto-select the placement if there's only one option available
+        if (_printfileResult != null && _selectedPlacement == null) {
+          final variantPrintfile = _printfileResult!.variant_printfiles
+              .where((vp) => vp.variant_id == widget.variant.id)
+              .firstOrNull;
+          
+          // Only auto-select if there's exactly one placement option
+          if (variantPrintfile != null && variantPrintfile.placements.length == 1) {
+            _selectedPlacement = variantPrintfile.placements.keys.first;
+          }
+        }
       });
     } catch (e) {
       setState(() {
@@ -98,6 +109,36 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
         const SnackBar(content: Text('Please select an image first')),
       );
       return;
+    }
+
+    // Check if a placement is selected (required for mockup generation)
+    if (_selectedPlacement == null) {
+      // Check if there's exactly one placement option
+      bool hasSinglePlacement = false;
+      String? singlePlacement;
+      
+      if (_printfileResult != null) {
+        final variantPrintfile = _printfileResult!.variant_printfiles
+            .where((vp) => vp.variant_id == widget.variant.id)
+            .firstOrNull;
+        
+        if (variantPrintfile != null && variantPrintfile.placements.length == 1) {
+          hasSinglePlacement = true;
+          singlePlacement = variantPrintfile.placements.keys.first;
+        }
+      }
+      
+      // If there's only one placement option, use it automatically
+      if (hasSinglePlacement && singlePlacement != null) {
+        setState(() {
+          _selectedPlacement = singlePlacement;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please select a placement first')),
+        );
+        return;
+      }
     }
 
     setState(() {
@@ -134,7 +175,7 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
         width: 1800,
         imageUrl: imageUrl, // Use the ImgBB URL instead of static URL
         placementStyle: 'fit', // Use fit positioning by default
-        placement: _selectedPlacement!,
+        placement: _selectedPlacement!, // Use the selected or auto-selected placement
         printfileWidth: 1800,
         printfileHeight: 2400,
       );
@@ -518,6 +559,13 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
       );
     }
 
+    // Auto-select the placement if there's only one option available and none is selected yet
+    if (variantPrintfile.placements.length == 1 && _selectedPlacement == null) {
+      setState(() {
+        _selectedPlacement = variantPrintfile.placements.keys.first;
+      });
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -531,7 +579,7 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
         ),
         const SizedBox(height: 12),
 
-        // Horizontal scrollable list of placement chips
+        // Horizontal scrollable list of placement chips (show all options including single)
         SizedBox(
           height: 50,
           child: ListView.builder(

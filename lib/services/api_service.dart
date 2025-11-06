@@ -270,52 +270,6 @@ class ApiService {
     Map<String, dynamic>? productOptions,
   }) async {
     print('Placement Style: $placement');
-    // Get available printfiles to determine valid placements
-    // String placement = 'default';
-    // List<String> fallbackPlacements = [
-    //   'embroidery_front',
-    //   'embroidery_left',
-    //   'embroidery_right', // Most common for hats
-    //   'front', 'back', 'left_chest', 'right_chest',
-    //   'center_front', 'label', 'default',
-    // ];
-
-    // try {
-    //   final printfilesResponse = await getProductVariantPrintfiles(productId);
-    //   final result = printfilesResponse['result'] as Map<String, dynamic>;
-
-    // Extract placements from variant_printfiles
-    // final variantPrintfiles = result['variant_printfiles'] as List? ?? [];
-
-    // if (variantPrintfiles.isNotEmpty) {
-    //   // Find the specific variant or use the first one
-    //   final targetVariant =
-    //       variantPrintfiles.firstWhere(
-    //             (vp) => vp['variant_id'] == variantId,
-    //             orElse: () => variantPrintfiles.first,
-    //           )
-    //           as Map<String, dynamic>;
-
-    //   final placements = targetVariant['placements'] as Map<String, dynamic>?;
-    //   if (placements != null && placements.isNotEmpty) {
-    //     // Use the first available placement
-    //     placement = placements.keys.first;
-    //   }
-    // }
-
-    // Fallback to available_placements if variant_printfiles doesn't work
-    // if (placement == 'default') {
-    //   final availablePlacements =
-    //       result['available_placements'] as Map<String, dynamic>?;
-    //   if (availablePlacements != null && availablePlacements.isNotEmpty) {
-    //     placement = availablePlacements.keys.first;
-    //   }
-    // }
-    // } catch (e) {
-    //   // If printfiles API fails, we'll try multiple common placements
-    //   placement = fallbackPlacements.first; // Start with first fallback
-    // }
-
     // Calculate positioning based on placement style
     final position = _calculatePosition(
       placementStyle: placementStyle,
@@ -323,15 +277,6 @@ class ApiService {
       printfileWidth: printfileWidth ?? 1800,
       printfileHeight: printfileHeight ?? 2400,
     );
-
-    // Try to create mockup task with fallback logic
-    // for (String currentPlacement in fallbackPlacements) {
-    //   if (placement != 'default') {
-    //     // If we got a valid placement from printfiles, try it first
-    //     currentPlacement = placement;
-    //   }
-
-    // print(currentPlacement);
 
     final body = json.encode({
       'variant_ids': [variantId],
@@ -341,7 +286,7 @@ class ApiService {
       'files': [
         {
           'placement': placement,
-          'image_url': 'https://i.ibb.co/B5XhsDZj/avo-mascot.png',
+          'image_url': imageUrl, // Use the dynamic imageUrl parameter instead of hardcoded URL
           'position': position,
         },
       ],
@@ -360,12 +305,6 @@ class ApiService {
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      // If this was the first attempt with the detected placement, continue with fallbacks
-      // if (placement != 'default' && currentPlacement == placement) {
-      //   placement = 'default'; // Reset to trigger fallback loop
-      //   continue;
-      // }
-
       // Handle rate limiting - stop trying and inform user
       if (response.statusCode == 429) {
         final errorData = json.decode(response.body);
@@ -388,18 +327,10 @@ class ApiService {
       // Add small delay for other errors to avoid rate limiting
       await Future.delayed(Duration(milliseconds: 1000));
 
-      // If we've tried all fallbacks, throw the error
-      // if (currentPlacement == fallbackPlacements.last) {
-      //   throw Exception(
-      //     'Failed to create V1 mockup task: ${response.statusCode}. Tried placements: ${fallbackPlacements.join(", ")}',
-      //   );
-      // }
-      // }
+      throw Exception(
+        'Failed to create V1 mockup task: ${response.statusCode}',
+      );
     }
-
-    throw Exception(
-      'Failed to create V1 mockup task: No valid placement found',
-    );
   }
 
   /// Checks the status of a mockup generation task
