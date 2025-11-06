@@ -527,8 +527,10 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
                         ),
                         Text(
                           _printfileResult!
-                                  .available_placements[_selectedPlacement] ??
-                              _selectedPlacement!,
+                                  .available_placements[_selectedPlacement] != null
+                              ? _formatPlacementName(
+                                  _printfileResult!.available_placements[_selectedPlacement]!)
+                              : _formatPlacementName(_selectedPlacement!),
                           style: TextStyle(color: Colors.green.shade600),
                         ),
                       ],
@@ -609,8 +611,9 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
               final isSelected = _selectedPlacement == placementName;
 
               final placementDescription =
-                  _printfileResult!.available_placements[placementName] ??
-                  placementName;
+                  _printfileResult!.available_placements[placementName] != null
+                      ? _formatPlacementName(_printfileResult!.available_placements[placementName]!)
+                      : _formatPlacementName(placementName);
 
               return Container(
                 margin: const EdgeInsets.only(right: 12),
