@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import '../services/pexels_service.dart';
 import 'wallpaper_detail_screen.dart';
-import 'mokup_screen.dart';
+import 'mockup/mockup_category_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

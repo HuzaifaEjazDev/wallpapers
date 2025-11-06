@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:wallpapers/viewmodels/mockup_provider.dart';
+import 'package:wallpapers/viewmodels/product_provider.dart';
 import 'dart:async'; // For unawaited
 import 'views/home_screen.dart';
 import 'views/category_screen.dart';
 import 'views/settings_screen.dart';
-import 'views/mokup_screen.dart'; // Add this import
+import 'views/mockup/mockup_category_screen.dart'; // Add this import
 import 'services/pixabay_service.dart';
 
 void main() {
@@ -25,17 +28,23 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Wallpapers',
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.green,
-          brightness: Brightness.dark,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ProductProvider()),
+        ChangeNotifierProvider(create: (_) => MockupProvider()),
+      ],
+      child: MaterialApp(
+        title: 'Wallpapers',
+        theme: ThemeData(
+          useMaterial3: true,
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.green,
+            brightness: Brightness.dark,
+          ),
         ),
+        home: const MainScreen(),
+        debugShowCheckedModeBanner: false,
       ),
-      home: const MainScreen(),
-      debugShowCheckedModeBanner: false,
     );
   }
 }
@@ -53,8 +62,9 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const CategoryScreen(),
+    const MockupCategoryScreen(),
     const SettingsScreen(),
-    const MokupScreen(), // Add MockupScreen as the last screen
+     // Add MockupScreen as the last screen
   ];
 
   @override
