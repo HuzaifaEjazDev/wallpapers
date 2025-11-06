@@ -1,11 +1,13 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:http/http.dart' as http;
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:share_plus/share_plus.dart';
 
 import 'dart:async';
 import 'dart:io' show Platform;
@@ -91,11 +93,7 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
             IconButton(
               icon: const Icon(Icons.share),
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Share functionality coming soon'),
-                  ),
-                );
+                _shareMockup();
               },
             ),
         ],
@@ -390,10 +388,11 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
               onPressed: () {
                 Navigator.of(context).popUntil((route) => route.isFirst);
               },
-              icon: const Icon(Icons.add),
-              label: const Text('Create Another Mockup'),
+              icon: const Icon(Icons.add, color: Colors.white), // White icon
+              label: const Text('Create Another Mockup', style: TextStyle(color: Colors.white)), // White text
               style: ElevatedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
+                backgroundColor: const Color(0xFF6C63FF), // Purple background to match theme
               ),
             ),
           ),
@@ -481,6 +480,94 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
           content: Text('Failed to download image: $e'),
         ),
       );
+    }
+  }
+
+  /// Shares the first mockup image
+  Future<void> _shareMockup() async {
+    try {
+      final mockupProvider = Provider.of<MockupProvider>(context, listen: false);
+      final result = mockupProvider.mockupResult;
+      
+      if (result != null && result['mockups'] != null && result['mockups'].isNotEmpty) {
+        final mockups = result['mockups'] as List;
+        final firstMockup = mockups.first;
+        final imageUrl = firstMockup['mockup_url'] as String?;
+        
+        if (imageUrl != null) {
+          // Show loading indicator
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Preparing image for sharing...'),
+            ),
+          );
+          
+          // Download image data
+          final response = await http.get(Uri.parse(imageUrl));
+          
+          if (response.statusCode == 200) {
+            // Create a temporary file
+            final tempDir = await getTemporaryDirectory();
+            final fileName = 'mockup_${DateTime.now().millisecondsSinceEpoch}.png';
+            final filePath = '${tempDir.path}/$fileName';
+            final file = File(filePath);
+            
+            // Write image data to file
+            await file.writeAsBytes(response.bodyBytes);
+            
+            // Share the file with error handling
+            try {
+              final XFile xFile = XFile(filePath);
+              await Share.shareXFiles(
+                [xFile],
+                text: 'Check out this awesome mockup I created!',
+              );
+            } catch (shareError) {
+              // Fallback: copy URL to clipboard
+              await Clipboard.setData(ClipboardData(text: imageUrl));
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Sharing failed. Image URL copied to clipboard instead.'),
+                  ),
+                );
+              }
+            }
+          } else {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Failed to download image for sharing'),
+                ),
+              );
+            }
+          }
+        } else {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('No image available to share'),
+              ),
+            );
+          }
+        }
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('No mockup available to share'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to share mockup: $e'),
+          ),
+        );
+      }
     }
   }
 }
