@@ -250,13 +250,6 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
                           widget.variant.name ?? 'Variant',
                           style: TextStyle(fontSize: 16, color: Colors.grey[400]),
                         ),
-                        if (widget.variant.size != null) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            'Size: ${widget.variant.size}',
-                            style: TextStyle(color: Colors.grey[400]),
-                          ),
-                        ],
                       ],
                     ),
                   ),
