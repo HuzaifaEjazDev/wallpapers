@@ -25,7 +25,7 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
   String? _selectedColor;
   Variant? _selectedVariant;
 
-  // Printfile related state
+  // Printfile related state (keep these for functionality but hide UI)
   PrintfileResult? _printfileResult;
   bool _isLoadingPrintfiles = false;
   String? _printfileError;
@@ -96,59 +96,6 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
       if (mounted) {
         setState(() {
           _isLoadingVariants = false;
-        });
-      }
-      // Load printfiles after variants are loaded and first variant is selected
-      // But only if the widget is still mounted
-      if (mounted && _selectedVariant != null) {
-        _loadPrintfiles();
-      }
-    }
-  }
-
-  /// Loads printfiles for the selected variant
-  Future<void> _loadPrintfiles() async {
-    if (_selectedVariant == null) return;
-
-    if (mounted) {
-      setState(() {
-        _isLoadingPrintfiles = true;
-        _printfileError = null;
-      });
-    }
-
-    try {
-      final provider = Provider.of<ProductProvider>(context, listen: false);
-      final result = await provider.getProductVariantPrintfiles(
-        widget.product.id,
-      );
-
-      if (mounted) {
-        setState(() {
-          _printfileResult = result;
-          // Auto-select the placement if there's only one option available
-          if (_printfileResult != null && _selectedPlacement == null) {
-            final variantPrintfile = _printfileResult!.variant_printfiles
-                .where((vp) => vp.variant_id == _selectedVariant!.id)
-                .firstOrNull;
-            
-            // Only auto-select if there's exactly one placement option
-            if (variantPrintfile != null && variantPrintfile.placements.length == 1) {
-              _selectedPlacement = variantPrintfile.placements.keys.first;
-            }
-          }
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _printfileError = e.toString();
-        });
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoadingPrintfiles = false;
         });
       }
     }
@@ -267,12 +214,6 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
             _buildSizeSelectionSection()
           else if (!hasColors)
             _buildDirectVariantSelection(),
-
-          // Printfile Options
-          if (selectedColorVariant != null) ...[
-            const SizedBox(height: 24),
-            _buildPrintfileOptionsSection(),
-          ],
 
           // Action Button
           if (_selectedVariant != null)
@@ -529,233 +470,68 @@ class _VariantSelectionScreenState extends State<VariantSelectionScreen> {
 
   /// Builds the printfile options section UI
   Widget _buildPrintfileOptionsSection() {
-    if (_selectedVariant == null) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Section header
-        Row(
-          children: [
-            Icon(Icons.style_outlined, color: Colors.blue.shade700, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              'Printfile Placement Options',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue.shade700,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // Loading state
-        if (_isLoadingPrintfiles)
-          Container(
-            height: 80,
-            child: const Center(child: CircularProgressIndicator()),
-          )
-        // Error state
-        else if (_printfileError != null)
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.red.shade200),
-            ),
-            child: Row(
-              children: [
-                Icon(Icons.error_outline, color: Colors.red.shade600, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Failed to load printfile options',
-                    style: TextStyle(color: Colors.red.shade700),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {
-                    // Load printfiles only if the widget is still mounted
-                    if (mounted) {
-                      _loadPrintfiles();
-                    }
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          )
-        // Printfile options
-        else if (_printfileResult != null) ...[
-          // Available placements horizontal list
-          _buildPlacementsList(),
-
-          const SizedBox(height: 16),
-
-          // Selected placement info
-          if (_selectedPlacement != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.green.shade200),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.check_circle,
-                    color: Colors.green.shade600,
-                    size: 20,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Selected Placement',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green.shade700,
-                          ),
-                        ),
-                        Text(
-                          _printfileResult!
-                                  .available_placements[_selectedPlacement] ??
-                              _selectedPlacement!,
-                          style: TextStyle(color: Colors.green.shade600),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      if (mounted) {
-                        setState(() {
-                          _selectedPlacement = null;
-                        });
-                      }
-                    },
-                    icon: const Icon(Icons.clear, size: 18),
-                    color: Colors.green.shade600,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
-      ],
-    );
+    // Completely hide the printfile options section UI as requested
+    return Container();
   }
 
   /// Builds the list of placement options for the selected variant
   Widget _buildPlacementsList() {
-    if (_selectedVariant == null || _printfileResult == null) {
-      return const SizedBox.shrink();
-    }
+    // Hide the placement options UI as requested
+    return Container();
+  }
 
-    // Find placements for the selected variant
-    final variantPrintfile = _printfileResult!.variant_printfiles
-        .where((vp) => vp.variant_id == _selectedVariant!.id)
-        .firstOrNull;
+  /// Loads printfiles for the selected variant
+  Future<void> _loadPrintfiles() async {
+    if (_selectedVariant == null) return;
 
-    if (variantPrintfile == null) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
-        child: Text(
-          'No printfile options available for this variant',
-          style: TextStyle(color: Colors.grey.shade700),
-        ),
-      );
-    }
-
-    // Auto-select the placement if there's only one option available and none is selected yet
-    if (variantPrintfile.placements.length == 1 && _selectedPlacement == null) {
+    if (mounted) {
       setState(() {
-        _selectedPlacement = variantPrintfile.placements.keys.first;
+        _isLoadingPrintfiles = true;
+        _printfileError = null;
       });
     }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Available placements for this variant:',
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 12),
+    try {
+      final provider = Provider.of<ProductProvider>(context, listen: false);
+      final result = await provider.getProductVariantPrintfiles(
+        widget.product.id,
+      );
 
-        // Horizontal scrollable list of placement chips (show all options including single)
-        SizedBox(
-          height: 50,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            itemCount: variantPrintfile.placements.length,
-            itemBuilder: (context, index) {
-              final entry = variantPrintfile.placements.entries.elementAt(
-                index,
-              );
-              final placementName = entry.key;
-              final printfileId = entry.value;
-              final isSelected = _selectedPlacement == placementName;
-
-              final placementDescription =
-                  _printfileResult!.available_placements[placementName] ??
-                  placementName;
-
-              return Container(
-                margin: const EdgeInsets.only(right: 12),
-                child: FilterChip(
-                  label: Text(
-                    placementName,
-                    style: TextStyle(
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                      fontSize: 12,
-                    ),
-                  ),
-                  onSelected: (selected) {
-                    if (mounted) {
-                      setState(() {
-                        if (selected) {
-                          _selectedPlacement = placementName;
-                        } else {
-                          _selectedPlacement = null;
-                        }
-                      });
-                    }
-                  },
-                  selected: isSelected,
-
-                  selectedColor: Colors.blue.shade600,
-                  checkmarkColor: Colors.blue.shade700,
-                  side: BorderSide(
-                    color: isSelected
-                        ? Colors.blue.shade400
-                        : Colors.grey.shade400,
-                  ),
-                  tooltip: '$placementDescription\nPrintfile ID: $printfileId',
-                ),
-              );
-            },
-          ),
-        ),
-      ],
-    );
+      if (mounted) {
+        setState(() {
+          _printfileResult = result;
+          // Auto-select the placement if there's only one option available
+          if (_printfileResult != null && _selectedPlacement == null) {
+            final variantPrintfile = _printfileResult!.variant_printfiles
+                .where((vp) => vp.variant_id == _selectedVariant!.id)
+                .firstOrNull;
+            
+            // Only auto-select if there's exactly one placement option
+            if (variantPrintfile != null && variantPrintfile.placements.length == 1) {
+              _selectedPlacement = variantPrintfile.placements.keys.first;
+            }
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _printfileError = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingPrintfiles = false;
+        });
+      }
+    }
   }
 
   /// Checks if user can proceed to mockup generation
   bool _canProceedToMockup() {
+    // Only require a variant to be selected, not a placement
+    // since we've removed the placement UI from this screen
     return _selectedVariant != null;
   }
 }
