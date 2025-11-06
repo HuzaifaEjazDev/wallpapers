@@ -63,9 +63,11 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
       if (mockupProvider.mockupResult != null) {
         final status = mockupProvider.mockupResult!['status'];
         if (status == 'completed' || status == 'failed') {
-          setState(() {
-            _isPolling = false;
-          });
+          if (mounted) {
+            setState(() {
+              _isPolling = false;
+            });
+          }
           timer.cancel();
         }
       }
@@ -73,7 +75,9 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
 
     // Initial fetch - delay until after first build to avoid setState during build
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      mockupProvider.getMockupTaskResult(widget.taskKey);
+      if (mounted) {
+        mockupProvider.getMockupTaskResult(widget.taskKey);
+      }
     });
   }
 

@@ -73,10 +73,12 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
       return;
     }
 
-    setState(() {
-      _isGenerating = true;
-      _isUploading = true; // Set uploading state
-    });
+    if (mounted) {
+      setState(() {
+        _isGenerating = true;
+        _isUploading = true; // Set uploading state
+      });
+    }
 
     String imageUrl = '';
     try {
@@ -84,14 +86,18 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
       try {
         imageUrl = await ImgBBService.uploadImage(_selectedImage!);
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to upload image: $e')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to upload image: $e')),
+          );
+        }
         return;
       } finally {
-        setState(() {
-          _isUploading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isUploading = false;
+          });
+        }
       }
 
       // Create mockup task using V1 API with the ImgBB URL
@@ -112,7 +118,7 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
         printfileHeight: 2400,
       );
 
-      if (mockupProvider.taskKey != null) {
+      if (mockupProvider.taskKey != null && mounted) {
         // Navigate to result screen
         Navigator.push(
           context,
@@ -126,13 +132,17 @@ class _MockupGeneratorScreenState extends State<MockupGeneratorScreen> {
         );
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error generating mockup: $e')));
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error generating mockup: $e')));
+      }
     } finally {
-      setState(() {
-        _isGenerating = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isGenerating = false;
+        });
+      }
     }
   }
 
