@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../models/mockup/category_model.dart';
 import '../../models/mockup/product_model.dart';
@@ -13,7 +15,9 @@ import '../../viewmodels/mockup_provider.dart';
 import 'mockup_result_screen.dart';
 
 class MockupUpdatedFlowScreen extends StatefulWidget {
-  const MockupUpdatedFlowScreen({super.key});
+  final String? preselectedImageUrl; // Add this parameter
+
+  const MockupUpdatedFlowScreen({super.key, this.preselectedImageUrl});
 
   @override
   State<MockupUpdatedFlowScreen> createState() => _MockupUpdatedFlowScreenState();
@@ -47,6 +51,12 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<ProductProvider>(context, listen: false).fetchCategories();
+      
+      // If a preselected image URL is provided, set it as the selected image
+      if (widget.preselectedImageUrl != null) {
+        // We'll need to download the image and set it as a file
+        _downloadAndSetPreselectedImage(widget.preselectedImageUrl!);
+      }
     });
   }
 
@@ -273,6 +283,10 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
 
   @override
   Widget build(BuildContext context) {
+    print('Building MockupUpdatedFlowScreen');
+    print('Preselected image URL: ${widget.preselectedImageUrl}');
+    print('Selected image path: ${_selectedImage?.path}');
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Mockup Generator'),
@@ -297,7 +311,35 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Header section
+                    // Info message when preselected image is available - full width just after AppBar
+                    if (widget.preselectedImageUrl != null)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(16),
+                        color: Colors.white, // White background
+                        child: const Row(
+                          children: [
+                            Icon(
+                              Icons.info,
+                              color: Colors.black, // Black "i" icon
+                              size: 20,
+                            ),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'The Wallpaper Image is selected for Mockup. Now Select other options and click to generate the Mockup.',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black, // Black text
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    
+                    // Header section with reduced text size
                     const Padding(
                       padding: EdgeInsets.all(24.0),
                       child: Column(
@@ -306,7 +348,7 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
                           Text(
                             'Select a Category',
                             style: TextStyle(
-                              fontSize: 36,
+                              fontSize: 24, // Reduced from 36 to 24
                               fontWeight: FontWeight.bold,
                               letterSpacing: -1,
                             ),
@@ -315,7 +357,7 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
                           Text(
                             'Choose a category to get started',
                             style: TextStyle(
-                              fontSize: 16,
+                              fontSize: 14, // Reduced from 16 to 14
                               color: Colors.grey,
                             ),
                           ),
@@ -335,8 +377,8 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
                       _buildProductDetailsSection(),
                     ],
                     
-                    // Image upload section - only show when product, variant, and placement are selected
-                    if (_selectedProduct != null && _selectedVariant != null && _selectedPlacement != null)
+                    // Image upload section - show when product, variant, and placement are selected OR when there's a preselected image
+                    if ((_selectedProduct != null && _selectedVariant != null && _selectedPlacement != null) || widget.preselectedImageUrl != null)
                       _buildImageUploadSection(),
                     
                     // Generate button - show when product, variant, and placement are selected (no image requirement)
@@ -465,7 +507,10 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
                       _selectedProduct = null; // Reset product selection
                       _selectedVariant = null; // Reset variant selection
                       _selectedPlacement = null; // Reset placement selection
-                      _selectedImage = null; // Reset image selection
+                      // Only reset image selection if there's no preselected image
+                      if (widget.preselectedImageUrl == null) {
+                        _selectedImage = null;
+                      }
                     });
                     
                     // Fetch products for the selected category
@@ -668,7 +713,10 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
             _selectedProduct = product;
             _selectedVariant = null; // Reset variant selection
             _selectedPlacement = null; // Reset placement selection
-            _selectedImage = null; // Reset image selection
+            // Only reset image selection if there's no preselected image
+            if (widget.preselectedImageUrl == null) {
+              _selectedImage = null;
+            }
           });
           
           // Load variants for the selected product
@@ -843,7 +891,10 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
                         _selectedColor = color;
                         _selectedVariant = firstVariant;
                         _selectedPlacement = null; // Reset placement when color changes
-                        _selectedImage = null; // Reset image selection
+                        // Only reset image selection if there's no preselected image
+                        if (widget.preselectedImageUrl == null) {
+                          _selectedImage = null;
+                        }
                       });
                       // Load printfiles for the new variant
                       _loadPrintfiles(_selectedProduct!);
@@ -1078,7 +1129,7 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
           ),
           const SizedBox(height: 16),
 
-          // Image Preview - only show when image is selected
+          // Image Preview - show when image is selected (either preselected or user uploaded)
           if (_selectedImage != null)
             Container(
               height: 300,
@@ -1092,22 +1143,31 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
               ),
             )
           else
-            // Show nothing when no image is selected
+            // Show nothing when no image is selected (don't show loading indicator after initial load)
             const SizedBox.shrink(),
           
           const SizedBox(height: 24),
 
-          // Single Upload Button with white border
+          // Single Upload Button with white border - disabled when preselected image is available
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
-              onPressed: _showImageSourceBottomSheet,
+              onPressed: widget.preselectedImageUrl != null ? null : _showImageSourceBottomSheet,
               icon: const Icon(Icons.cloud_upload_outlined),
               label: const Text('Upload your Image'),
               style: OutlinedButton.styleFrom(
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                side: const BorderSide(color: Colors.white), // White border
-                foregroundColor: Colors.white, // White text
+                side: BorderSide(
+                  color: widget.preselectedImageUrl != null 
+                    ? Colors.grey // Grey border when disabled
+                    : Colors.white, // White border when enabled
+                ),
+                foregroundColor: widget.preselectedImageUrl != null 
+                  ? Colors.grey // Grey text when disabled
+                  : Colors.white, // White text when enabled
+                backgroundColor: widget.preselectedImageUrl != null 
+                  ? Colors.grey.withOpacity(0.3) // Light grey background when disabled
+                  : null, // No background when enabled
                 textStyle: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -1218,6 +1278,40 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
         );
       },
     );
+  }
+
+  /// Downloads and sets a preselected image from URL
+  Future<void> _downloadAndSetPreselectedImage(String imageUrl) async {
+    try {
+      // Download the image using Dio
+      final dio = Dio();
+      final tempDir = await getTemporaryDirectory();
+      final tempPath = '${tempDir.path}/preselected_image_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      
+      await dio.download(imageUrl, tempPath);
+      
+      // Set the downloaded image as the selected image
+      setState(() {
+        _selectedImage = File(tempPath);
+      });
+      
+      // Debug print to check if image is set
+      print('Preselected image set: ${_selectedImage?.path}');
+      
+      // Show a snackbar to confirm the image was loaded
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Image loaded successfully')),
+        );
+      }
+    } catch (e) {
+      print('Failed to load preselected image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load preselected image: $e')),
+        );
+      }
+    }
   }
 
   /// Formats placement name for display: capitalize first letter and replace underscores with spaces

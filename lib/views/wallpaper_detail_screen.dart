@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wallpaper/wallpaper.dart';
 import '../widgets/cached_image.dart';
+import 'mockup/mockup_updated_flow_screen.dart'; // Import the mockup screen
 
 class WallpaperDetailScreen extends StatelessWidget {
   final String imageUrl;
@@ -74,6 +75,16 @@ class WallpaperDetailScreen extends StatelessWidget {
     );
   }
 
+  // Function to navigate to mockup screen with this image
+  void _addToMockup(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => MockupUpdatedFlowScreen(preselectedImageUrl: imageUrl),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -105,6 +116,33 @@ class WallpaperDetailScreen extends StatelessWidget {
                     size: 30,
                   ),
                   onPressed: () => Navigator.pop(context),
+                ),
+              ),
+            ),
+            // Add to Mockup button at top right
+            SafeArea(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: ElevatedButton(
+                    onPressed: () => _addToMockup(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.purple.shade900,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text(
+                      'Add to Mockup',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
