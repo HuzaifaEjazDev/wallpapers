@@ -443,7 +443,7 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
     final categories = provider.categories;
 
     return SizedBox(
-      height: 120,
+      height: 130, // Increased height to accommodate text below
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
@@ -452,93 +452,62 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
           final isSelected = _selectedCategoryId == category.id;
           
           return Container(
-            width: 100,
-            margin: const EdgeInsets.only(left: 16, right: 8),
-            child: InkWell(
-              onTap: () {
-                setState(() {
-                  _selectedCategoryId = category.id;
-                  _selectedCategoryName = category.title;
-                  _selectedProduct = null; // Reset product selection
-                  _selectedVariant = null; // Reset variant selection
-                  _selectedPlacement = null; // Reset placement selection
-                  _selectedImage = null; // Reset image selection
-                });
-                
-                // Fetch products for the selected category
-                final productProvider = Provider.of<ProductProvider>(context, listen: false);
-                productProvider.fetchProductsByCategory(category.id);
-              },
-              child: Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      color: Colors.grey[800],
-                      border: Border.all(
-                        color: isSelected ? const Color(0xFF6C63FF) : Colors.transparent,
-                        width: 2,
-                      ),
+            width: 100, // Fixed width for all categories
+            margin: const EdgeInsets.only(left: 4, right: 0), // Further reduced horizontal spacing
+            child: Column(
+              children: [
+                // Category image container with fixed size
+                Container(
+                  width: 90,
+                  height: 90,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8), // Increased radius
+                    color: Colors.grey[800],
+                    border: Border.all(
+                      color: isSelected ? Colors.white : Colors.transparent, // White border when selected
+                      width: 2,
                     ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: CachedNetworkImage(
-                        imageUrl: category.image_url!,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          color: Colors.grey[700],
-                          child: const Center(
-                            child: CircularProgressIndicator(
-                              color: Color(0xFF6C63FF),
-                            ),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(6), // Match the container radius
+                    child: CachedNetworkImage(
+                      imageUrl: category.image_url!,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(
+                        color: Colors.grey[700],
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: Color(0xFF6C63FF),
                           ),
                         ),
-                        errorWidget: (context, url, error) => Container(
-                          color: Colors.grey[800],
-                          child: const Icon(
-                            Icons.category,
-                            color: Colors.grey,
-                          ),
+                      ),
+                      errorWidget: (context, url, error) => Container(
+                        color: Colors.grey[800],
+                        child: const Icon(
+                          Icons.category,
+                          color: Colors.grey,
                         ),
                       ),
                     ),
                   ),
-                  // Black gradient overlay
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      gradient: const LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black54,
-                        ],
-                      ),
+                ),
+                // Category title below the image container
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, left: 4, right: 4), // Space outside the container
+                  child: Text(
+                    category.title,
+                    style: const TextStyle(
+                      fontSize: 11, // Consistent font size
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
+                    maxLines: 2, // Allow up to 2 lines
+                    textAlign: TextAlign.center,
+                    overflow: TextOverflow.ellipsis,
+                    softWrap: true, // Allow text to wrap
                   ),
-                  // Category title
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          category.title,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },
@@ -646,14 +615,14 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
           ),
         ),
         SizedBox(
-          height: 250,
+          height: 200, // Fixed height
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             itemCount: products.length,
             itemBuilder: (context, index) {
               return Container(
-                width: 150,
-                margin: const EdgeInsets.only(left: 16, right: 8),
+                width: 120, // Reduced width
+                margin: const EdgeInsets.only(left: 6, right: 6), // Reduced spacing
                 child: _buildProductCard(products[index]),
               );
             },
@@ -669,7 +638,14 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
     
     return Card(
       elevation: isSelected ? 8 : 2,
-      shadowColor: isSelected ? const Color(0xFF6C63FF) : null,
+      shadowColor: isSelected ? Colors.white : null, // White shadow when selected
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(8), // Reduced radius
+        side: BorderSide(
+          color: isSelected ? Colors.white : Colors.transparent, // White border when selected
+          width: 2,
+        ),
+      ),
       child: InkWell(
         onTap: () {
           setState(() {
@@ -682,7 +658,7 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
           // Load variants for the selected product
           _loadVariants(product);
         },
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8), // Match the card radius
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -690,18 +666,14 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
               child: Container(
                 decoration: BoxDecoration(
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
+                    top: Radius.circular(8), // Match the card radius
                   ),
                   color: Colors.grey[900],
-                  border: Border.all(
-                    color: isSelected ? const Color(0xFF6C63FF) : Colors.transparent,
-                    width: 2,
-                  ),
                 ),
                 child: product.image != null
                     ? ClipRRect(
                         borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(16),
+                          top: Radius.circular(8), // Match the container radius
                         ),
                         child: CachedNetworkImage(
                           imageUrl: product.image!,
@@ -725,7 +697,7 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(8), // Reduced padding
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -733,16 +705,16 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
                     product.title ?? 'No Name',
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 12, // Reduced font size
                     ),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   if (product.brand != null) ...[
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2), // Reduced spacing
                     Text(
                       product.brand!,
-                      style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                      style: TextStyle(color: Colors.grey[400], fontSize: 10), // Reduced font size
                     ),
                   ],
                 ],
