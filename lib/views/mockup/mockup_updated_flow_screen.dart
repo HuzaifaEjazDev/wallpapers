@@ -457,35 +457,51 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
             child: Column(
               children: [
                 // Category image container with fixed size
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8), // Increased radius
-                    color: Colors.grey[800],
-                    border: Border.all(
-                      color: isSelected ? Colors.white : Colors.transparent, // White border when selected
-                      width: 2,
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedCategoryId = category.id;
+                      _selectedCategoryName = category.title;
+                      _selectedProduct = null; // Reset product selection
+                      _selectedVariant = null; // Reset variant selection
+                      _selectedPlacement = null; // Reset placement selection
+                      _selectedImage = null; // Reset image selection
+                    });
+                    
+                    // Fetch products for the selected category
+                    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+                    productProvider.fetchProductsByCategory(category.id);
+                  },
+                  child: Container(
+                    width: 90,
+                    height: 90,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8), // Increased radius
+                      color: Colors.grey[800],
+                      border: Border.all(
+                        color: isSelected ? Colors.green : Colors.transparent, // Green border when selected
+                        width: 2,
+                      ),
                     ),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(6), // Match the container radius
-                    child: CachedNetworkImage(
-                      imageUrl: category.image_url!,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(
-                        color: Colors.grey[700],
-                        child: const Center(
-                          child: CircularProgressIndicator(
-                            color: Color(0xFF6C63FF),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(6), // Match the container radius
+                      child: CachedNetworkImage(
+                        imageUrl: category.image_url!,
+                        fit: BoxFit.cover,
+                        placeholder: (context, url) => Container(
+                          color: Colors.grey[700],
+                          child: const Center(
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF6C63FF),
+                            ),
                           ),
                         ),
-                      ),
-                      errorWidget: (context, url, error) => Container(
-                        color: Colors.grey[800],
-                        child: const Icon(
-                          Icons.category,
-                          color: Colors.grey,
+                        errorWidget: (context, url, error) => Container(
+                          color: Colors.grey[800],
+                          child: const Icon(
+                            Icons.category,
+                            color: Colors.grey,
+                          ),
                         ),
                       ),
                     ),
@@ -638,11 +654,11 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
     
     return Card(
       elevation: isSelected ? 8 : 2,
-      shadowColor: isSelected ? Colors.white : null, // White shadow when selected
+      shadowColor: isSelected ? Colors.green : null, // Green shadow when selected
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8), // Reduced radius
         side: BorderSide(
-          color: isSelected ? Colors.white : Colors.transparent, // White border when selected
+          color: isSelected ? Colors.green : Colors.transparent, // Green border when selected
           width: 2,
         ),
       ),
@@ -736,6 +752,56 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
         
         // Printfile placement selection section
         _buildPrintfileSelectionSection(),
+        
+        // Display selected product image below placement selection
+        if (_selectedProduct != null && _selectedVariant != null)
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Selected Product Preview',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  width: 120, // Updated width
+                  height: 170, // Updated height
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey[900],
+                  ),
+                  child: _selectedVariant?.image != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: CachedNetworkImage(
+                            imageUrl: _selectedVariant!.image!,
+                            width: 120, // Updated width
+                            height: 170, // Updated height
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) => Center(
+                              child: CircularProgressIndicator(
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                            errorWidget: (context, url, error) => const Icon(
+                              Icons.image_not_supported,
+                              size: 48,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        )
+                      : const Center(
+                          child: Icon(Icons.image, size: 48, color: Colors.grey),
+                        ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -755,7 +821,7 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
           ),
           const SizedBox(height: 12),
           SizedBox(
-            height: 120,
+            height: 50, // Reduced height for better design
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               itemCount: uniqueColors.length,
@@ -783,57 +849,24 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
                       _loadPrintfiles(_selectedProduct!);
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4), // Added horizontal padding, reduced vertical padding
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFF6C63FF)
+                              ? Colors.green
                               : Colors.grey[600]!,
                           width: isSelected ? 3 : 1,
                         ),
                       ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (firstVariant?.image != null)
-                            ClipRRect(
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(9),
-                              ),
-                              child: CachedNetworkImage(
-                                imageUrl: firstVariant!.image!,
-                                height: 60,
-                                width: 80,
-                                fit: BoxFit.cover,
-                              ),
-                            )
-                          else
-                            Container(
-                              height: 60,
-                              width: 80,
-                              decoration: BoxDecoration(
-                                color: Colors.grey[800],
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(9),
-                                ),
-                              ),
-                              child: const Icon(Icons.image, size: 24),
-                            ),
-                          Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Text(
-                              color,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                      child: Center(
+                        child: Text(
+                          color,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ],
+                        ),
                       ),
                     ),
                   ),
@@ -908,54 +941,17 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
 
             const SizedBox(height: 16),
 
-            // Selected placement info
+            // Selected placement info - removed the green container
             if (_selectedPlacement != null) ...[
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.green.shade200),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle,
-                      color: Colors.green.shade600,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Selected Placement',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green.shade700,
-                            ),
-                          ),
-                          Text(
-                            _printfileResult!
-                                    .available_placements[_selectedPlacement] != null
-                                ? _formatPlacementName(
-                                    _printfileResult!.available_placements[_selectedPlacement]!)
-                                : _formatPlacementName(_selectedPlacement!),
-                            style: TextStyle(color: Colors.green.shade600),
-                          ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _selectedPlacement = null;
-                        });
-                      },
-                      icon: const Icon(Icons.clear, size: 18),
-                      color: Colors.green.shade600,
-                    ),
-                  ],
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Selected Placement: ${_formatPlacementName(_selectedPlacement!)}',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ],
