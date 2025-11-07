@@ -71,33 +71,37 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
       final List hits = result['hits'];
       final int totalHits = result['totalHits'] ?? 0;
       
-      setState(() {
-        if (loadMore) {
-          _wallpapers.addAll(hits);
-          _isLoadingMore = false;
-          // Check if we've reached the end of available data
-          // The API limits to 500 total hits per query, so we check against that
-          if (hits.isEmpty || _wallpapers.length >= totalHits || _wallpapers.length >= 500) {
-            _hasMoreData = false;
-          }
-        } else {
-          _wallpapers = hits;
-          _totalHits = totalHits;
-          _isLoading = false;
-          _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
-        }
-        // Increment page number AFTER loading data
-        _currentPage++;
-      });
-    } catch (error) {
-      setState(() {
-        if (loadMore) {
-          _isLoadingMore = false;
-        } else {
-          _isLoading = false;
-        }
-      });
+      // Check if the widget is still mounted before updating state
       if (mounted) {
+        setState(() {
+          if (loadMore) {
+            _wallpapers.addAll(hits);
+            _isLoadingMore = false;
+            // Check if we've reached the end of available data
+            // The API limits to 500 total hits per query, so we check against that
+            if (hits.isEmpty || _wallpapers.length >= totalHits || _wallpapers.length >= 500) {
+              _hasMoreData = false;
+            }
+          } else {
+            _wallpapers = hits;
+            _totalHits = totalHits;
+            _isLoading = false;
+            _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
+          }
+          // Increment page number AFTER loading data
+          _currentPage++;
+        });
+      }
+    } catch (error) {
+      // Check if the widget is still mounted before updating state
+      if (mounted) {
+        setState(() {
+          if (loadMore) {
+            _isLoadingMore = false;
+          } else {
+            _isLoading = false;
+          }
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to load wallpapers: $error')),
         );
@@ -163,15 +167,18 @@ class _CategoryWallpapersScreenState extends State<CategoryWallpapersScreen> {
                     
                     return GestureDetector(
                       onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => WallpaperDetailScreen(
-                              imageUrl: largeImageUrl,
-                              category: widget.category,
+                        // Check if the widget is still mounted before navigating
+                        if (mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WallpaperDetailScreen(
+                                imageUrl: largeImageUrl,
+                                category: widget.category,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        }
                       },
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(12),

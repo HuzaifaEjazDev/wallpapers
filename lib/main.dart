@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wallpapers/viewmodels/mockup_provider.dart';
 import 'package:wallpapers/viewmodels/product_provider.dart';
+import 'package:wallpapers/views/mockup/mockup_updated_flow_screen.dart';
 import 'dart:async'; // For unawaited
 import 'views/home_screen.dart';
 import 'views/category_screen.dart';
 import 'views/settings_screen.dart';
 import 'views/mockup/mockup_category_screen.dart'; // Add this import
-import 'services/pixabay_service.dart';
+import 'services/pexels_service.dart';
+import 'services/home_screen_service.dart';
 
 void main() {
   // Preload category data when the app starts
@@ -20,7 +22,8 @@ void main() {
 // Preload data in the background
 Future<void> _preloadData() async {
   // Don't wait for this to complete, let it run in the background
-  unawaited(PixabayService.preloadCategories());
+  unawaited(PexelsService.preloadCategories());
+  unawaited(HomeScreenService.preloadHomeScreenData());
 }
 
 class MyApp extends StatelessWidget {
@@ -62,7 +65,8 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomeScreen(),
     const CategoryScreen(),
-    const MockupCategoryScreen(),
+    // const MockupCategoryScreen(),
+    const MockupUpdatedFlowScreen(),
     const SettingsScreen(),
      // Add MockupScreen as the last screen
   ];

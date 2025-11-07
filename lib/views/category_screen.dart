@@ -28,26 +28,34 @@ class _CategoryScreenState extends State<CategoryScreen> {
     });
 
     try {
-      // Define a list of categories
-      final List<String> categories = [
-        'backgrounds', 'fashion', 'nature', 'science', 'education', 'feelings',
-        'health', 'people', 'religion', 'places', 'animals', 'industry',
-        'computer', 'food', 'sports', 'transportation', 'travel', 'buildings',
-        'business', 'music'
-      ];
-      
-      // Get random 5 categories
-      final List<String> shuffled = List.from(categories)..shuffle();
-      _categories = shuffled.take(5).toList();
-      
-      // Fetch 5 wallpapers for each category using Pexels API
-      for (String category in _categories) {
-        final wallpapers = await PexelsService.fetchWallpapersByCategory(category, 5);
-        if (mounted) {
-          setState(() {
+      // Check if data is already cached and we're not forcing a refresh
+      if (PexelsService.isDataCached() && !forceRefresh) {
+        // Use cached data
+        _categories = PexelsService.getCachedCategories();
+        for (String category in _categories) {
+          final wallpapers = PexelsService.getCachedWallpapers(category);
+          if (wallpapers != null) {
             _categoryWallpapers[category] = wallpapers;
-          });
+          }
         }
+      } else {
+        // Fetch new data
+        _categories = PexelsService.getRandomCategories();
+        
+        // Fetch 5 wallpapers for each category
+        Map<String, List<dynamic>> newWallpapers = {};
+        for (String category in _categories) {
+          final wallpapers = await PexelsService.fetchWallpapersByCategory(category, 5);
+          newWallpapers[category] = wallpapers;
+          if (mounted) {
+            setState(() {
+              _categoryWallpapers[category] = wallpapers;
+            });
+          }
+        }
+        
+        // Update cache with new data for next app start
+        PexelsService.updateCache(_categories, newWallpapers);
       }
     } catch (error) {
       if (mounted) {
@@ -130,14 +138,17 @@ class _CategoryScreenState extends State<CategoryScreen> {
                               ),
                               TextButton(
                                 onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => CategoryWallpapersScreen(
-                                        category: category,
+                                  // Check if the widget is still mounted before navigating
+                                  if (mounted) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => CategoryWallpapersScreen(
+                                          category: category,
+                                        ),
                                       ),
-                                    ),
-                                  );
+                                    );
+                                  }
                                 },
                                 child: const Text(
                                   'VIEW MORE',
@@ -147,6 +158,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                   ),
                                 ),
                               ),
+
                             ],
                           ),
                         ),
@@ -168,17 +180,20 @@ class _CategoryScreenState extends State<CategoryScreen> {
                                 ),
                                 child: GestureDetector(
                                   onTap: () {
-                                    // Use large image for full screen view
-                                    String largeImageUrl = wallpaper['src']['large2x'];
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => WallpaperDetailScreen(
-                                          imageUrl: largeImageUrl,
-                                          category: category,
+                                    // Check if the widget is still mounted before navigating
+                                    if (mounted) {
+                                      // Use large image for full screen view
+                                      String largeImageUrl = wallpaper['src']['large2x'];
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => WallpaperDetailScreen(
+                                            imageUrl: largeImageUrl,
+                                            category: category,
+                                          ),
                                         ),
-                                      ),
-                                    );
+                                      );
+                                    }
                                   },
                                   child: CachedImage(
                                     imageUrl: imageUrl,

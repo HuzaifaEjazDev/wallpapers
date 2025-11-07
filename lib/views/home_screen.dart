@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:wallpapers/views/mockup/mockup_updated_flow_screen.dart';
 import '../services/pexels_service.dart';
+import '../services/home_screen_service.dart';
 import 'wallpaper_detail_screen.dart';
 import 'mockup/mockup_category_screen.dart';
 
@@ -38,7 +39,20 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  Future<void> _loadWallpapers({bool loadMore = false}) async {
+  Future<void> _loadWallpapers({bool loadMore = false, bool forceRefresh = false}) async {
+    // If we're not loading more and data is cached, use cached data
+    if (!loadMore && !forceRefresh && HomeScreenService.isDataCached() && HomeScreenService.getCachedQuery() == _searchQuery) {
+      if (mounted) {
+        setState(() {
+          _wallpapers = List.from(HomeScreenService.getCachedWallpapers());
+          _totalHits = HomeScreenService.getCachedTotalHits();
+          _isLoading = false;
+          _hasMoreData = _wallpapers.length < _totalHits && _wallpapers.length < 500;
+        });
+      }
+      return;
+    }
+    
     if (loadMore && (_isLoading || _isLoadingMore || !_hasMoreData)) return;
 
     setState(() {
@@ -48,7 +62,9 @@ class _HomeScreenState extends State<HomeScreen> {
         _isLoading = true;
         _currentPage = 1; // Reset to first page for new searches
         _displayPage = 1; // Reset display page as well
-        _wallpapers = [];
+        if (!forceRefresh && !HomeScreenService.isDataCached()) {
+          _wallpapers = [];
+        }
         _hasMoreData = true;
         _totalHits = 0;
       }
@@ -65,55 +81,70 @@ class _HomeScreenState extends State<HomeScreen> {
       final List hits = result['hits'];
       final int totalHits = result['totalHits'] ?? 0;
       
-      setState(() {
-        if (loadMore) {
-          _wallpapers.addAll(hits);
-          _isLoadingMore = false;
-          // Check if we've reached the end of available data
-          // The API limits to 500 total hits per query, so we check against that
-          if (hits.isEmpty || _wallpapers.length >= totalHits || _wallpapers.length >= 500) {
-            _hasMoreData = false;
+      // Check if the widget is still mounted before updating state
+      if (mounted) {
+        setState(() {
+          if (loadMore) {
+            _wallpapers.addAll(hits);
+            _isLoadingMore = false;
+            // Check if we've reached the end of available data
+            // The API limits to 500 total hits per query, so we check against that
+            if (hits.isEmpty || _wallpapers.length >= totalHits || _wallpapers.length >= 500) {
+              _hasMoreData = false;
+            }
+          } else {
+            _wallpapers = hits;
+            _totalHits = totalHits;
+            _isLoading = false;
+            _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
           }
-        } else {
-          _wallpapers = hits;
-          _totalHits = totalHits;
-          _isLoading = false;
-          _hasMoreData = hits.isNotEmpty && hits.length >= _perPage && _wallpapers.length < 500 && _wallpapers.length < totalHits;
-        }
-        // Update display page to match current page
-        _displayPage = _currentPage;
-        // Increment page number AFTER loading data
-        _currentPage++;
-      });
+          // Update display page to match current page
+          _displayPage = _currentPage;
+          // Increment page number AFTER loading data
+          _currentPage++;
+        });
+        
+        // Update cache with new data
+        HomeScreenService.updateCache(_wallpapers, _searchQuery, _totalHits);
+      }
     } catch (error) {
-      setState(() {
-        if (loadMore) {
-          _isLoadingMore = false;
-        } else {
-          _isLoading = false;
-        }
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load wallpapers: $error')),
-      );
+      // Check if the widget is still mounted before updating state
+      if (mounted) {
+        setState(() {
+          if (loadMore) {
+            _isLoadingMore = false;
+          } else {
+            _isLoading = false;
+          }
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load wallpapers: $error')),
+        );
+      }
     }
   }
 
   Future<void> _performSearch() async {
-    setState(() {
-      final userInput = _searchController.text.trim();
-      // Use only the user input for search (no default prompt added)
-      _searchQuery = userInput.isEmpty ? 'wallpapers' : userInput;
-    });
-    _loadWallpapers();
+    // Check if the widget is still mounted before updating state
+    if (mounted) {
+      setState(() {
+        final userInput = _searchController.text.trim();
+        // Use only the user input for search (no default prompt added)
+        _searchQuery = userInput.isEmpty ? 'wallpapers' : userInput;
+      });
+      _loadWallpapers(forceRefresh: true);
+    }
   }
 
   void _checkForPagination(int? currentIndex) {
     // Update current index for pagination display
     if (currentIndex != null) {
-      setState(() {
-        _currentIndex = currentIndex;
-      });
+      // Check if the widget is still mounted before updating state
+      if (mounted) {
+        setState(() {
+          _currentIndex = currentIndex;
+        });
+      }
       
       // Load more images when we reach the 17th image out of 20
       if (_wallpapers.length - currentIndex <= 3 && _hasMoreData && !_isLoadingMore) {
@@ -145,19 +176,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // iOS back icon at leading position
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
-                    onPressed: () {
-                      // Back functionality
-                      Navigator.maybePop(context);
-                    },
-                  ),
+                  Text('Wallpapers'),
                   // Filter sort icon at trailing position
                   IconButton(
                     icon: const Icon(Icons.sort, color: Colors.white),
                     onPressed: () {
                       // Filter functionality (to be implemented)
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const MockupUpdatedFlowScreen()));
                     },
                   ),
                 ],
@@ -235,16 +259,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                         final wallpaper = _wallpapers[index];
                                         return GestureDetector(
                                           onTap: () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) => WallpaperDetailScreen(
-                                                  // Use Pexels image URL structure
-                                                  imageUrl: wallpaper['src']['large2x'],
-                                                  category: 'wallpapers', // Default category for home screen images
+                                            // Check if the widget is still mounted before navigating
+                                            if (mounted) {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) => WallpaperDetailScreen(
+                                                    // Use Pexels image URL structure
+                                                    imageUrl: wallpaper['src']['large2x'],
+                                                    category: 'wallpapers', // Default category for home screen images
+                                                  ),
                                                 ),
-                                              ),
-                                            );
+                                              );
+                                            }
                                           },
                                           child: Center(
                                             child: Container(
@@ -300,7 +327,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                             ),
                                           ),
                                         );
-
                                       },
                                     ),
                                   ),
