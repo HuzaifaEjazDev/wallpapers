@@ -423,20 +423,24 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
   /// Downloads the mockup image to device Download directory
   Future<void> _downloadMockupImage(String imageUrl, String fileName) async {
     try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Downloading: $fileName'),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Downloading: $fileName'),
+          ),
+        );
+      }
       
       // Request storage permission
       final status = await Permission.storage.request();
       if (!status.isGranted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Permission denied to save image'),
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Permission denied to save image'),
+            ),
+          );
+        }
         return;
       }
       
@@ -445,45 +449,71 @@ class _MockupResultScreenState extends State<MockupResultScreen> {
       
       if (response.statusCode == 200) {
         // Get the Download directory
-        final directory = await getExternalStorageDirectory();
-        String downloadPath;
+        Directory? downloadDir;
         
         if (Platform.isAndroid) {
-          // For Android, navigate to the Download directory
-          downloadPath = '${directory!.path.split('/Android')[0]}/Download';
+          // For Android, get the Download directory
+          final externalDir = await getExternalStorageDirectory();
+          if (externalDir != null) {
+            // Navigate to the Download directory
+            downloadDir = Directory('${externalDir.path.split('/Android')[0]}/Download');
+          }
+        } else if (Platform.isIOS) {
+          // For iOS, use the documents directory
+          downloadDir = await getApplicationDocumentsDirectory();
         } else {
           // For other platforms, use the documents directory
-          final docDir = await getApplicationDocumentsDirectory();
-          downloadPath = docDir.path;
+          downloadDir = await getApplicationDocumentsDirectory();
         }
         
-        // Create a file name
-        final sanitizedFileName = fileName.replaceAll(RegExp(r'[^\w\s\.-]'), '_');
-        final timestamp = DateTime.now().millisecondsSinceEpoch;
-        final filePath = '$downloadPath/${sanitizedFileName}_$timestamp.png';
-        
-        // Write image data to file
-        final file = File(filePath);
-        await file.writeAsBytes(response.bodyBytes);
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Image saved to Downloads: $sanitizedFileName.png'),
-          ),
-        );
+        if (downloadDir != null) {
+          // Create directory if it doesn't exist
+          if (!(await downloadDir.exists())) {
+            await downloadDir.create(recursive: true);
+          }
+          
+          // Create a file name
+          final sanitizedFileName = fileName.replaceAll(RegExp(r'[^\w\s\.-]'), '_');
+          final timestamp = DateTime.now().millisecondsSinceEpoch;
+          final filePath = '${downloadDir.path}/${sanitizedFileName}_$timestamp.png';
+          
+          // Write image data to file
+          final file = File(filePath);
+          await file.writeAsBytes(response.bodyBytes);
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Image saved to: $filePath'),
+              ),
+            );
+          }
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Failed to access download directory'),
+              ),
+            );
+          }
+        }
       } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to download image: ${response.statusCode}'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to download image: ${response.statusCode}'),
+            content: Text('Failed to download image: $e'),
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to download image: $e'),
-        ),
-      );
     }
   }
 
