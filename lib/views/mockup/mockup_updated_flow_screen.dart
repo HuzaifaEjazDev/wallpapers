@@ -335,11 +335,11 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
                       _buildProductDetailsSection(),
                     ],
                     
-                    // Image upload section
+                    // Image upload section - only show when product, variant, and placement are selected
                     if (_selectedProduct != null && _selectedVariant != null && _selectedPlacement != null)
                       _buildImageUploadSection(),
                     
-                    // Generate button
+                    // Generate button - show when product, variant, and placement are selected (no image requirement)
                     if (_selectedProduct != null && _selectedVariant != null && _selectedPlacement != null)
                       Padding(
                         padding: const EdgeInsets.all(24),
@@ -1078,7 +1078,7 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
           ),
           const SizedBox(height: 16),
 
-          // Image Preview or Upload Button
+          // Image Preview - only show when image is selected
           if (_selectedImage != null)
             Container(
               height: 300,
@@ -1092,88 +1092,131 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
               ),
             )
           else
-            Container(
-              height: 300,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Colors.grey[700]!,
-                  width: 2,
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.cloud_upload_outlined,
-                    size: 64,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No image selected',
-                    style: TextStyle(fontSize: 16, color: Colors.grey[400]),
-                  ),
-                ],
-              ),
-            ),
+            // Show nothing when no image is selected
+            const SizedBox.shrink(),
+          
           const SizedBox(height: 24),
 
-          // Upload Buttons
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _pickImage(ImageSource.gallery),
-                  icon: const Icon(Icons.photo_library),
-                  label: const Text('Gallery'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: const BorderSide(color: Colors.white), // White border
-                    foregroundColor: Colors.white, // White text
-                  ),
+          // Single Upload Button with white border
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _showImageSourceBottomSheet,
+              icon: const Icon(Icons.cloud_upload_outlined),
+              label: const Text('Upload your Image'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                side: const BorderSide(color: Colors.white), // White border
+                foregroundColor: Colors.white, // White text
+                textStyle: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () => _pickImage(ImageSource.camera),
-                  icon: const Icon(Icons.camera_alt),
-                  label: const Text('Camera'),
-                  style: OutlinedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    side: const BorderSide(color: Colors.white), // White border
-                    foregroundColor: Colors.white, // White text
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 32),
-
-          // Info Text
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFF6C63FF).withOpacity(0.1),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.info_outline, color: Color(0xFF6C63FF)),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Upload your design and we\'ll generate a realistic mockup for you',
-                    style: TextStyle(color: Colors.grey[300], fontSize: 14),
-                  ),
-                ),
-              ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// Shows bottom sheet with image source options
+  void _showImageSourceBottomSheet() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (BuildContext context) {
+        return Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                Colors.green.shade900, // Dark green for top
+                Colors.grey.shade900,  // Dark grey for bottom
+              ],
+            ),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[600],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                const Text(
+                  'Select Image Source',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Gallery Option
+                ListTile(
+                  leading: const Icon(
+                    Icons.photo_library,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                  title: const Text(
+                    'Gallery',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.gallery);
+                  },
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Camera Option
+                ListTile(
+                  leading: const Icon(
+                    Icons.camera_alt,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+                  title: const Text(
+                    'Camera',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _pickImage(ImageSource.camera);
+                  },
+                ),
+                
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
