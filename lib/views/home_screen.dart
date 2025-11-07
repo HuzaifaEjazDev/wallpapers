@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 import 'package:wallpapers/views/mockup/mockup_updated_flow_screen.dart';
+import 'package:wallpapers/views/new_home_screen.dart'; // Add this import
 import '../services/pexels_service.dart';
 import '../services/home_screen_service.dart';
 import 'wallpaper_detail_screen.dart';
@@ -177,11 +178,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 children: [
                   // iOS back icon at leading position
                   Text('Wallpapers'),
-                  // Filter sort icon at trailing position
+                  // Filter sort icon at trailing position - now navigates to new home screen
                   IconButton(
                     icon: const Icon(Icons.sort, color: Colors.white),
                     onPressed: () {
-                      // Filter functionality (to be implemented)
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const NewHomeScreen(),
+                        ),
+                      );
                     },
                   ),
                 ],
