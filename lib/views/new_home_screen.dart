@@ -5,6 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 
 import '../models/mockup/category_model.dart';
 import '../viewmodels/product_provider.dart';
+import 'mockup/mockup_updated_flow_screen.dart';
 
 class NewHomeScreen extends StatefulWidget {
   const NewHomeScreen({super.key});
@@ -193,47 +194,69 @@ class _NewHomeScreenState extends State<NewHomeScreen> {
         itemBuilder: (context, index) {
           final category = _randomCategories[index];
           
+          // Check if this is the selected category (when coming back from mockup screen)
+          final bool isSelected = false; // We don't have selection state in this screen
+          
           return Container(
             width: 120,
             margin: const EdgeInsets.only(left: 16),
             child: Column(
               children: [
-                // Category image
-                Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey[800],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: category.image_url != null
-                        ? CachedNetworkImage(
-                            imageUrl: category.image_url!,
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(
-                              color: Colors.grey[700],
-                              child: const Center(
-                                child: CircularProgressIndicator(
-                                  color: Colors.white30,
+                // Category image - make it tappable to navigate to mockup screen
+                GestureDetector(
+                  onTap: () {
+                    // Navigate to mockup screen with the selected category pre-selected
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MockupUpdatedFlowScreen(
+                          preselectedCategoryId: category.id,
+                          preselectedCategoryName: category.title,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    height: 100,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey[800],
+                      // Add border to indicate selection when coming back from mockup screen
+                      border: Border.all(
+                        color: isSelected ? Colors.green : Colors.transparent,
+                        width: 2,
+                      ),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: category.image_url != null
+                          ? CachedNetworkImage(
+                              imageUrl: category.image_url!,
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: Colors.grey[700],
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white30,
+                                  ),
                                 ),
                               ),
-                            ),
-                            errorWidget: (context, url, error) => Container(
+                              errorWidget: (context, url, error) => Container(
+                                color: Colors.grey[800],
+                                child: const Icon(
+                                  Icons.category,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            )
+                          : Container(
                               color: Colors.grey[800],
                               child: const Icon(
                                 Icons.category,
                                 color: Colors.grey,
                               ),
                             ),
-                          )
-                        : Container(
-                            color: Colors.grey[800],
-                            child: const Icon(
-                              Icons.category,
-                              color: Colors.grey,
-                            ),
-                          ),
+                    ),
                   ),
                 ),
                 // Category title

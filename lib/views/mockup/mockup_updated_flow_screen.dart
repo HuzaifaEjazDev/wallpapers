@@ -5,7 +5,6 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
-
 import '../../models/mockup/category_model.dart';
 import '../../models/mockup/product_model.dart';
 import '../../models/mockup/printfile_model.dart';
@@ -15,9 +14,11 @@ import '../../viewmodels/mockup_provider.dart';
 import 'mockup_result_screen.dart';
 
 class MockupUpdatedFlowScreen extends StatefulWidget {
-  final String? preselectedImageUrl; // Add this parameter
+  final String? preselectedImageUrl;
+  final int? preselectedCategoryId; // Add this parameter
+  final String? preselectedCategoryName; // Add this parameter
 
-  const MockupUpdatedFlowScreen({super.key, this.preselectedImageUrl});
+  const MockupUpdatedFlowScreen({super.key, this.preselectedImageUrl, this.preselectedCategoryId, this.preselectedCategoryName});
 
   @override
   State<MockupUpdatedFlowScreen> createState() => _MockupUpdatedFlowScreenState();
@@ -45,19 +46,49 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
   final ImagePicker _picker = ImagePicker();
   bool _isGenerating = false;
   bool _isUploading = false;
+  
+  // Scroll controller for categories
+  final ScrollController _categoryScrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ProductProvider>(context, listen: false).fetchCategories();
-      
-      // If a preselected image URL is provided, set it as the selected image
-      if (widget.preselectedImageUrl != null) {
-        // We'll need to download the image and set it as a file
-        _downloadAndSetPreselectedImage(widget.preselectedImageUrl!);
+      if (mounted) {
+        final productProvider = Provider.of<ProductProvider>(context, listen: false);
+        productProvider.fetchCategories();
+        
+        // If a preselected image URL is provided, set it as the selected image
+        if (widget.preselectedImageUrl != null) {
+          // We'll need to download the image and set it as a file
+          _downloadAndSetPreselectedImage(widget.preselectedImageUrl!);
+        }
+        
+        // If a preselected category is provided, set it as the selected category
+        if (widget.preselectedCategoryId != null && widget.preselectedCategoryName != null) {
+          setState(() {
+            _selectedCategoryId = widget.preselectedCategoryId;
+            _selectedCategoryName = widget.preselectedCategoryName;
+          });
+          
+          // Fetch products for the selected category
+          productProvider.fetchProductsByCategory(widget.preselectedCategoryId!);
+          
+          // Scroll to the selected category after a short delay to ensure the list is built
+          Future.delayed(const Duration(milliseconds: 100), () {
+            if (mounted) {
+              _scrollToSelectedCategory();
+            }
+          });
+        }
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _categoryScrollController.dispose();
+    super.dispose();
   }
 
   /// Picks an image from gallery or camera
@@ -286,6 +317,8 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
     print('Building MockupUpdatedFlowScreen');
     print('Preselected image URL: ${widget.preselectedImageUrl}');
     print('Selected image path: ${_selectedImage?.path}');
+    print('Preselected category ID: ${widget.preselectedCategoryId}');
+    print('Selected category ID: $_selectedCategoryId');
     
     return Scaffold(
       appBar: AppBar(
@@ -487,6 +520,7 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
     return SizedBox(
       height: 130, // Increased height to accommodate text below
       child: ListView.builder(
+        controller: _categoryScrollController, // Add the controller
         scrollDirection: Axis.horizontal,
         itemCount: categories.length,
         itemBuilder: (context, index) {
@@ -1329,5 +1363,34 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
     }
     
     return formatted;
+  }
+
+  /// Scrolls to the selected category in the horizontal list
+  void _scrollToSelectedCategory() {
+    if (_selectedCategoryId == null || !_categoryScrollController.hasClients) {
+      return;
+    }
+    
+    // Get the provider to access the categories list
+    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    final categories = productProvider.categories;
+    
+    // Find the index of the selected category
+    final selectedIndex = categories.indexWhere((category) => category.id == _selectedCategoryId);
+    
+    if (selectedIndex != -1) {
+      // Calculate the scroll position to center the selected category
+      // Each category item is 100px wide with 4px left margin
+      final itemWidth = 100.0;
+      final itemMargin = 4.0;
+      final scrollPosition = (selectedIndex * (itemWidth + itemMargin)) - (MediaQuery.of(context).size.width / 2) + (itemWidth / 2);
+      
+      // Animate to the calculated position
+      _categoryScrollController.animateTo(
+        scrollPosition.clamp(0.0, _categoryScrollController.position.maxScrollExtent),
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
   }
 }
