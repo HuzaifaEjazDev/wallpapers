@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_card_swiper/flutter_card_swiper.dart';
+import 'package:wallpapers/views/mockup/mockup_updated_flow_screen.dart';
 import '../services/pexels_service.dart';
 import 'wallpaper_detail_screen.dart';
 import 'mockup/mockup_category_screen.dart';
@@ -156,6 +157,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     icon: const Icon(Icons.sort, color: Colors.white),
                     onPressed: () {
                       // Filter functionality (to be implemented)
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const MockupUpdatedFlowScreen()));
                     },
                   ),
                 ],
