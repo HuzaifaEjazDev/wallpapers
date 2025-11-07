@@ -731,34 +731,6 @@ class _MockupUpdatedFlowScreenState extends State<MockupUpdatedFlowScreen>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Product header
-        Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _selectedProduct!.title ?? 'Product',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              if (_selectedProduct!.brand != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Brand: ${_selectedProduct!.brand}',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[400]),
-                ),
-              ],
-              if (_selectedProduct!.type != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  'Type: ${_selectedProduct!.type}',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[400]),
-                ),
-              ],
-            ],
-          ),
-        ),
-        
         // Color selection section
         if (_hasColorsAvailable()) _buildColorSelectionSection(),
         
