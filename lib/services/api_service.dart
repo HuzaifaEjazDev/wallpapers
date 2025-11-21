@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 /// Provides methods for products, categories, variants, and mockup generation
 class ApiService {
   static const String baseUrl = 'https://api.printful.com';
-  static const String bearerToken = 'IlGdogEDCu9p7Z4EKRtjpXhzWFRedViJqKQaWdSR';
+  static const String bearerToken = '';
 
   /// Gets default headers for API requests
   static Map<String, String> get headers => {
